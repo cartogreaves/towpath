@@ -1,37 +1,38 @@
-import { useContext } from 'react'
-import { MapContext } from '../../contexts/MapContext'
+// src/components/menu/ZoomControl.tsx
+import { useMap } from '../../contexts/MapContext'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPlus, faMinus } from '@fortawesome/free-solid-svg-icons'
+import { useTheme } from '../../contexts/ThemeContext'
 
 export default function ZoomControl() {
-  const map = useContext(MapContext)
-
-  const handleZoomIn = () => {
-    map?.zoomIn()
-  }
-
-  const handleZoomOut = () => {
-    map?.zoomOut()
-  }
+  const map = useMap()
+  const { isDarkMode } = useTheme()
 
   return (
     <div className="absolute top-4 right-16 z-10 flex gap-2">
-      <div className="bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex">
+      <div className={`backdrop-blur-sm rounded-full shadow-lg flex items-center
+        ${isDarkMode ? 'bg-gray-800' : 'bg-white/90'}`}>
         <button 
-          onClick={handleZoomOut}
-          className="p-2 hover:bg-gray-100 rounded-l-full"
+          onClick={() => map?.zoomOut()}
+          className={`w-10 h-10 flex items-center justify-center rounded-l-full 
+            ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
           aria-label="Zoom out"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-          </svg>
+          <FontAwesomeIcon 
+            icon={faMinus} 
+            className="h-5 w-5 text-blue-600" 
+          />
         </button>
         <button 
-          onClick={handleZoomIn}
-          className="p-2 hover:bg-gray-100 rounded-r-full border-l border-gray-200"
+          onClick={() => map?.zoomIn()}
+          className={`w-10 h-10 flex items-center justify-center rounded-r-full border-l 
+            ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-100'}`}
           aria-label="Zoom in"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <FontAwesomeIcon 
+            icon={faPlus} 
+            className="h-5 w-5 text-blue-600" 
+          />
         </button>
       </div>
     </div>

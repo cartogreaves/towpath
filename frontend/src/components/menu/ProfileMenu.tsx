@@ -1,28 +1,25 @@
 // src/components/menu/ProfileMenu.tsx
-import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useIsTouchDevice } from '../../hooks/useIsTouchDevice'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUser } from '@fortawesome/free-solid-svg-icons'
+import { faUser, faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
+import { useTheme } from '../../contexts/ThemeContext'
 
 export default function ProfileMenu() {
-  const [isOpen, setIsOpen] = useState(false)
-  const isTouchDevice = useIsTouchDevice()
   const navigate = useNavigate()
   const token = localStorage.getItem('token')
+  const { isDarkMode, toggleDarkMode } = useTheme()
 
   const handleLogout = () => {
     localStorage.removeItem('token')
     navigate('/')
-    setIsOpen(false)
   }
 
   return (
     <div className="absolute top-4 right-4 z-10">
-      <div className={`relative inline-block ${!isTouchDevice ? 'group' : ''}`}>
+      <div className="relative inline-block group">
         <button 
-          onClick={() => isTouchDevice && setIsOpen(!isOpen)}
-          className="w-10 h-10 rounded-full bg-white/90 shadow-lg hover:bg-gray-100 flex items-center justify-center"
+          className={`w-10 h-10 rounded-full shadow-lg flex items-center justify-center
+            ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white/90 hover:bg-gray-100'}`}
           aria-label="Profile menu"
         >
           <FontAwesomeIcon 
@@ -31,35 +28,49 @@ export default function ProfileMenu() {
           />
         </button>
 
-        <div className={`
-          absolute right-0 mt-2 w-[132px] bg-white/90 backdrop-blur-sm rounded-lg shadow-lg py-1
-          ${isTouchDevice ? isOpen ? 'block' : 'hidden' : 'hidden group-hover:block'}
-        `}>
-          {token ? (
-            <>
+        <div className="invisible group-hover:visible absolute right-0 top-full pt-2">
+          <div className={`w-[132px] backdrop-blur-sm rounded-lg shadow-lg py-1
+            ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white/90'}`}>
+            {token ? (
+              <>
+                <Link 
+                  to="/profile"
+                  className={`block px-4 py-2 text-sm 
+                    ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                >
+                  Profile
+                </Link>
+                <button 
+                  onClick={toggleDarkMode}
+                  className={`block w-full px-4 py-2 text-sm text-left
+                    ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                >
+                  <div className="flex items-center">
+                    <FontAwesomeIcon 
+                      icon={isDarkMode ? faSun : faMoon} 
+                      className="mr-2" 
+                    />
+                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                  </div>
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className={`block w-full px-4 py-2 text-sm text-left
+                    ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
               <Link 
-                to="/profile"
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                onClick={() => setIsOpen(false)}
+                to="/login"
+                className={`block px-4 py-2 text-sm
+                  ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
               >
-                Profile
+                Sign In
               </Link>
-              <button 
-                onClick={handleLogout}
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link 
-              to="/login"
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              onClick={() => setIsOpen(false)}
-            >
-              Sign In
-            </Link>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
