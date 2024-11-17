@@ -1,7 +1,7 @@
-// src/pages/Register.tsx
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
+import TowpathHomeButton from '../components/menu/TowpathHomeButton'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -28,14 +28,15 @@ export default function Register() {
       })
       
       localStorage.setItem('token', response.data.access_token)
-      navigate('/map')
+      navigate('/')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Registration failed')
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
+      <TowpathHomeButton />
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
         <h2 className="text-3xl font-bold text-center">Register for Towpath</h2>
         {error && <div className="text-red-500 text-center">{error}</div>}
@@ -86,15 +87,15 @@ export default function Register() {
           >
             Register
           </button>
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-                <Link to="/login" className="text-blue-600 hover:text-blue-700">
-                  Login here
-                </Link>
-            </p>
-          </div>
         </form>
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600">
+            Already have an account?{' '}
+            <Link to="/login" className="text-blue-600 hover:text-blue-700">
+              Login here
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )

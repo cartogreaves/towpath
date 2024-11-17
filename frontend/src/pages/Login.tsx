@@ -1,7 +1,7 @@
-// src/pages/Login.tsx
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
+import TowpathHomeButton from '../components/menu/TowpathHomeButton'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -13,27 +13,26 @@ export default function Login() {
     e.preventDefault()
     try {
       const formData = new FormData()
-      formData.append('username', email)  // FastAPI OAuth expects 'username'
+      formData.append('username', email)
       formData.append('password', password)
       
       const response = await axios.post('http://localhost:8000/auth/login', formData)
       localStorage.setItem('token', response.data.access_token)
-      navigate('/map')
+      navigate('/')
     } catch (err) {
       setError('Invalid credentials')
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
+      <TowpathHomeButton />
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <h2 className="text-3xl font-bold text-center">Welcome to Towpath</h2>
+        <h2 className="text-3xl font-bold text-center">Login to Towpath</h2>
         {error && <div className="text-red-500 text-center">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
             <input
               id="email"
               type="email"
@@ -44,9 +43,7 @@ export default function Login() {
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
             <input
               id="password"
               type="password"
@@ -62,15 +59,15 @@ export default function Login() {
           >
             Sign in
           </button>
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-blue-600 hover:text-blue-700">
-                Register here
-              </Link>
-            </p>
-          </div>
         </form>
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-blue-600 hover:text-blue-700">
+              Register here
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )
