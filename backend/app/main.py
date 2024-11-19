@@ -6,12 +6,11 @@ app = FastAPI(title="Towpath Community API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"],  # Be specific with the origin
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],  # Add PUT
     allow_headers=["*"],
 )
-
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 
 @app.get("/")

@@ -1,30 +1,36 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import TowpathHomeButton from '../components/menu/TowpathHomeButton'
-import { useTheme } from '../contexts/ThemeContext'
+import { useState, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useTheme } from '../contexts/ThemeContext';
+import { UserContext } from '../contexts/UserContext';
+import TowpathHomeButton from '../components/menu/TowpathHomeButton';
 
 export default function Login() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const { isDarkMode } = useTheme()
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { isDarkMode } = useTheme();
+  const { initializeUser } = useContext(UserContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      const formData = new FormData()
-      formData.append('username', email)
-      formData.append('password', password)
+      const formData = new FormData();
+      formData.append('username', email);
+      formData.append('password', password);
       
-      const response = await axios.post('http://localhost:8000/auth/login', formData)
-      localStorage.setItem('token', response.data.access_token)
-      navigate('/')
+      const response = await axios.post('http://localhost:8000/auth/login', formData);
+      localStorage.setItem('token', response.data.access_token);
+      
+      // Initialize user data right after successful login
+      await initializeUser();
+      
+      navigate('/');
     } catch (err) {
-      setError('Invalid credentials')
+      setError('Invalid credentials');
     }
-  }
+  };
 
   return (
     <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>

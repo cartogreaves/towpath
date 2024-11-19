@@ -1,11 +1,14 @@
-import { useState } from 'react'
-import TowpathHomeButton from '../components/menu/TowpathHomeButton'
-import ProfileMenu from '../components/menu/ProfileMenu'
-import { useTheme } from '../contexts/ThemeContext'
+import { useState, useContext } from 'react';
+import TowpathHomeButton from '../components/menu/TowpathHomeButton';
+import ProfileMenu from '../components/menu/ProfileMenu';
+import AccountSettings from '../components/profile/AccountSettings';
+import { useTheme } from '../contexts/ThemeContext';
+import { UserContext } from '../contexts/UserContext'; // Updated import
 
 export default function Profile() {
-  const [activeTab, setActiveTab] = useState('account')
-  const { isDarkMode } = useTheme()
+  const [activeTab, setActiveTab] = useState('account');
+  const { isDarkMode } = useTheme();
+  const { username } = useContext(UserContext);
 
   return (
     <div className={`h-screen overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -15,7 +18,7 @@ export default function Profile() {
         <div className="mt-20">
           <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} shadow rounded-lg`}>
             <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h1 className="text-2xl font-semibold">Your Profile</h1>
+              <h1 className="text-2xl font-semibold">Hey {username}</h1>
             </div>
 
             <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -37,19 +40,13 @@ export default function Profile() {
             </div>
 
             <div className="p-6">
-              {activeTab === 'account' && (
-                <div>Account Content</div>
-              )}
-              {activeTab === 'boat' && (
-                <div>Boat Details Content</div>
-              )}
-              {activeTab === 'preferences' && (
-                <div>Preferences Content</div>
-              )}
+              {activeTab === 'account' && <AccountSettings />}
+              {activeTab === 'boat' && <div>Boat Details Content</div>}
+              {activeTab === 'preferences' && <div>Preferences Content</div>}
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

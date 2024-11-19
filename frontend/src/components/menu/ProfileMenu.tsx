@@ -1,18 +1,21 @@
-// src/components/menu/ProfileMenu.tsx
-import { Link, useNavigate } from 'react-router-dom'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUser, faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
-import { useTheme } from '../../contexts/ThemeContext'
+import { Link, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useContext } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
+import { UserContext } from '../../contexts/UserContext'; // Updated import path
+import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
 
 export default function ProfileMenu() {
-  const navigate = useNavigate()
-  const token = localStorage.getItem('token')
-  const { isDarkMode, toggleDarkMode } = useTheme()
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { avatar, resetUser } = useContext(UserContext);
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    navigate('/')
-  }
+    localStorage.removeItem('token');
+    resetUser(); // Reset the user context when logging out
+    navigate('/');
+  };
 
   return (
     <div className="absolute top-4 right-4 z-10">
@@ -22,10 +25,7 @@ export default function ProfileMenu() {
             ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white/90 hover:bg-gray-100'}`}
           aria-label="Profile menu"
         >
-          <FontAwesomeIcon 
-            icon={faUser} 
-            className="h-5 w-5 text-blue-600" 
-          />
+          <span className="text-xl">{avatar}</span>
         </button>
 
         <div className="invisible group-hover:visible absolute right-0 top-full pt-2">
@@ -74,5 +74,5 @@ export default function ProfileMenu() {
         </div>
       </div>
     </div>
-  )
+  );
 }

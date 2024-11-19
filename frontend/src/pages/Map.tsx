@@ -8,7 +8,7 @@ import { MapContext } from '../contexts/MapContext'
 import { useTheme } from '../contexts/ThemeContext'
 
 const MAP_STYLES = {
-  light: 'https://tiles.openfreemap.org/styles/liberty',
+  light: 'https://tiles.openfreemap.org/styles/bright',
   dark: 'https://api.maptiler.com/maps/basic-v2-dark/style.json?key=iyDUwVavsj7dSscbvWWe'
 }
 

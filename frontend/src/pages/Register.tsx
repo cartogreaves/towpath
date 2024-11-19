@@ -1,25 +1,27 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import TowpathHomeButton from '../components/menu/TowpathHomeButton'
-import { useTheme } from '../contexts/ThemeContext'
+import { useState, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useTheme } from '../contexts/ThemeContext';
+import { UserContext } from '../contexts/UserContext';
+import TowpathHomeButton from '../components/menu/TowpathHomeButton';
 
 export default function Register() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     username: '',
     password: '',
     confirmPassword: ''
-  })
-  const [error, setError] = useState('')
-  const { isDarkMode } = useTheme()
+  });
+  const [error, setError] = useState('');
+  const { isDarkMode } = useTheme();
+  const { initializeUser } = useContext(UserContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      return
+      setError('Passwords do not match');
+      return;
     }
 
     try {
@@ -27,14 +29,18 @@ export default function Register() {
         email: formData.email,
         username: formData.username,
         password: formData.password
-      })
+      });
       
-      localStorage.setItem('token', response.data.access_token)
-      navigate('/')
+      localStorage.setItem('token', response.data.access_token);
+      
+      // Initialize user data right after successful registration
+      await initializeUser();
+      
+      navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Registration failed')
+      setError(err.response?.data?.detail || 'Registration failed');
     }
-  }
+  };
 
   return (
     <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
