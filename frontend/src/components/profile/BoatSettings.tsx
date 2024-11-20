@@ -72,7 +72,7 @@ export default function BoatSettings() {
       container: mapContainer.current,
       style: isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light,
       center: [formData.longitude, formData.latitude],
-      zoom: 13,
+      zoom: 15,
       attributionControl: false
     });
 

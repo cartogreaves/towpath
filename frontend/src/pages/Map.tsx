@@ -21,12 +21,12 @@ interface Boat {
 
 const MAP_LOCATIONS = {
   DEFAULT: {
-    center: [-2.2507, 51.3475],
-    zoom: 13
+    center: [-2.2507, 51.3415],
+    zoom: 15
   },
   LOGGED_IN: {
-    center: [-2.2507, 51.3475],
-    zoom: 14
+    center: [-2.2507, 51.3415],
+    zoom: 15
   }
 };
 
@@ -135,7 +135,7 @@ export default function Map() {
         const boat = response.data[0];
         return {
           center: [boat.longitude, boat.latitude],
-          zoom: 16
+          zoom: 15
         };
       }
 
