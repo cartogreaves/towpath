@@ -3,14 +3,17 @@ import { useContext } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { UserContext } from '../../contexts/UserContext';
 import { Sun, Moon } from 'lucide-react';
+import { useBoat } from '../../contexts/BoatContext';
 
 export default function ProfileMenu() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const { isDarkMode, toggleDarkMode } = useTheme();
   const { avatar, resetUser } = useContext(UserContext);
+  const { clearBoatMarker } = useBoat();
 
   const handleLogout = () => {
+    clearBoatMarker();
     localStorage.removeItem('token');
     resetUser();
     navigate('/');

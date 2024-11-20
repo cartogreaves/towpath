@@ -10,6 +10,7 @@ import { MapContext } from '../contexts/MapContext';
 import { useTheme } from '../contexts/ThemeContext';
 import BoatMarker from '../components/markers/BoatMarker';
 import { MAP_STYLES } from '../constants/mapStyles';
+import { useBoat } from '../contexts/BoatContext';
 
 interface Boat {
   id: number;
@@ -47,6 +48,7 @@ export default function Map() {
   const markerElRef = useRef<HTMLDivElement | null>(null);
   const boatRef = useRef<Boat | null>(null);
   const { isDarkMode } = useTheme();
+  const { setClearBoatMarker } = useBoat();
 
   const updateMarkerTheme = () => {
     if (markerElRef.current) {
@@ -162,6 +164,27 @@ export default function Map() {
       console.error('Failed to fetch boat:', error);
     }
   };
+
+  const clearBoatMarker = () => {
+    if (markerRef.current) {
+      markerRef.current.remove();
+      markerRef.current = null;
+    }
+    if (popupRef.current) {
+      popupRef.current.remove();
+      popupRef.current = null;
+    }
+    if (markerElRef.current) {
+      ReactDOM.unmountComponentAtNode(markerElRef.current);
+      markerElRef.current = null;
+    }
+    boatRef.current = null;
+  };
+
+  useEffect(() => {
+    setClearBoatMarker(() => clearBoatMarker);
+    return () => setClearBoatMarker(() => () => {});
+  }, []);
 
   // Initial map setup
   useEffect(() => {
