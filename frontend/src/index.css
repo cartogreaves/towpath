@@ -6,3 +6,18 @@
   width: 100% !important;
   height: 100% !important;
 }
+
+/* Popup styles */
+.boat-name-popup {
+  z-index: 1;
+}
+
+.boat-name-popup .maplibregl-popup-content {
+  padding: 0 !important;
+  border-radius: 9999px !important;
+  background: transparent !important;
+}
+
+.boat-name-popup .maplibregl-popup-tip {
+  display: none !important;
+}

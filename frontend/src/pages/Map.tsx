@@ -1,47 +1,220 @@
-import { useEffect, useRef, useState } from 'react'
-import maplibregl from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
-import TowpathMenu from '../components/menu/TowpathMenu'
-import ProfileMenu from '../components/menu/ProfileMenu'
-import ZoomControl from '../components/menu/ZoomControl'
-import { MapContext } from '../contexts/MapContext'
-import { useTheme } from '../contexts/ThemeContext'
+import { useEffect, useRef, useState } from 'react';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import axios from 'axios';
+import ReactDOM from 'react-dom';
+import TowpathMenu from '../components/menu/TowpathMenu';
+import ProfileMenu from '../components/menu/ProfileMenu';
+import ZoomControl from '../components/menu/ZoomControl';
+import { MapContext } from '../contexts/MapContext';
+import { useTheme } from '../contexts/ThemeContext';
+import BoatMarker from '../components/markers/BoatMarker';
+import { MAP_STYLES } from '../constants/mapStyles';
 
-const MAP_STYLES = {
-  light: 'https://tiles.openfreemap.org/styles/bright',
-  dark: 'https://api.maptiler.com/maps/basic-v2-dark/style.json?key=iyDUwVavsj7dSscbvWWe'
+interface Boat {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
 }
 
+const MAP_LOCATIONS = {
+  DEFAULT: {
+    center: [-2.2507, 51.3475],
+    zoom: 13
+  },
+  LOGGED_IN: {
+    center: [-2.2507, 51.3475],
+    zoom: 14
+  }
+};
+
+const BoatPopup = ({ name, isDarkMode }: { name: string; isDarkMode: boolean }) => (
+  <div className={`px-3 py-1.5 rounded-full text-blue-600 font-medium text-sm ${
+    isDarkMode 
+      ? 'bg-gray-800/90' 
+      : 'bg-white/90'
+  }`}>
+    {name}
+  </div>
+);
+
 export default function Map() {
-  const mapContainer = useRef<HTMLDivElement>(null)
-  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null)
-  const { isDarkMode } = useTheme()
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null);
+  const markerRef = useRef<maplibregl.Marker | null>(null);
+  const popupRef = useRef<maplibregl.Popup | null>(null);
+  const markerElRef = useRef<HTMLDivElement | null>(null);
+  const boatRef = useRef<Boat | null>(null);
+  const { isDarkMode } = useTheme();
 
+  const updateMarkerTheme = () => {
+    if (markerElRef.current) {
+      ReactDOM.render(
+        <BoatMarker size={25} isDarkMode={isDarkMode} />,
+        markerElRef.current
+      );
+    }
+  };
+
+  const createPopup = (boat: Boat) => {
+    const popupEl = document.createElement('div');
+    ReactDOM.render(
+      <BoatPopup name={boat.name} isDarkMode={isDarkMode} />,
+      popupEl
+    );
+
+    return new maplibregl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: [0, -20],
+      className: 'boat-name-popup'
+    }).setDOMContent(popupEl);
+  };
+
+  const createMarker = (boat: Boat, map: maplibregl.Map) => {
+    // Clean up existing marker and popup
+    if (markerRef.current) {
+      markerRef.current.remove();
+    }
+    if (popupRef.current) {
+      popupRef.current.remove();
+    }
+
+    // Create marker element
+    const el = document.createElement('div');
+    markerElRef.current = el;
+    
+    // Create popup
+    popupRef.current = createPopup(boat);
+
+    // Render boat marker
+    ReactDOM.render(
+      <BoatMarker size={25} isDarkMode={isDarkMode} />,
+      el
+    );
+
+    // Create and add marker to map
+    markerRef.current = new maplibregl.Marker({
+      element: el,
+    })
+      .setLngLat([boat.longitude, boat.latitude])
+      .addTo(map);
+
+    // Add hover events
+    el.addEventListener('mouseenter', () => {
+      if (popupRef.current && markerRef.current) {
+        popupRef.current
+          .setLngLat(markerRef.current.getLngLat())
+          .addTo(map);
+      }
+    });
+
+    el.addEventListener('mouseleave', () => {
+      if (popupRef.current) {
+        popupRef.current.remove();
+      }
+    });
+  };
+
+  const determineMapCenter = async () => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      return MAP_LOCATIONS.DEFAULT;
+    }
+
+    try {
+      const response = await axios.get('http://localhost:8000/boats/my-boats', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data && response.data.length > 0) {
+        const boat = response.data[0];
+        return {
+          center: [boat.longitude, boat.latitude],
+          zoom: 16
+        };
+      }
+
+      return MAP_LOCATIONS.LOGGED_IN;
+    } catch (error) {
+      console.error('Failed to fetch boat:', error);
+      return MAP_LOCATIONS.LOGGED_IN;
+    }
+  };
+
+  const fetchAndDisplayBoat = async (map: maplibregl.Map) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await axios.get('http://localhost:8000/boats/my-boats', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data && response.data.length > 0) {
+        const boat = response.data[0];
+        boatRef.current = boat;
+        createMarker(boat, map);
+      }
+    } catch (error) {
+      console.error('Failed to fetch boat:', error);
+    }
+  };
+
+  // Initial map setup
   useEffect(() => {
-    if (!mapContainer.current) return
+    if (!mapContainer.current) return;
 
-    const map = new maplibregl.Map({
-      container: mapContainer.current,
-      style: isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light,
-      center: [-2.2507, 51.3475],
-      zoom: 16,
-      attributionControl: false // Remove map attribution
-    })
+    const initializeMap = async () => {
+      const initialLocation = await determineMapCenter();
+      
+      const map = new maplibregl.Map({
+        container: mapContainer.current,
+        style: isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light,
+        center: initialLocation.center,
+        zoom: initialLocation.zoom,
+        attributionControl: false
+      });
 
-    map.on('load', () => {
-      setMapInstance(map)
-    })
+      map.on('load', () => {
+        setMapInstance(map);
+        fetchAndDisplayBoat(map);
+      });
+    };
+
+    initializeMap();
 
     return () => {
-      map.remove()
+      if (markerElRef.current) {
+        ReactDOM.unmountComponentAtNode(markerElRef.current);
+      }
+      if (markerRef.current) {
+        markerRef.current.remove();
+      }
+      if (popupRef.current) {
+        popupRef.current.remove();
+      }
+      if (mapInstance) {
+        mapInstance.remove();
+      }
     }
-  }, []) // Initial map setup
+  }, []);
 
+  // Handle theme changes
   useEffect(() => {
     if (mapInstance) {
-      mapInstance.setStyle(isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light)
+      mapInstance.setStyle(isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light);
+      updateMarkerTheme();
+      
+      // Update popup theme if it exists
+      if (boatRef.current) {
+        popupRef.current?.remove();
+        popupRef.current = createPopup(boatRef.current);
+      }
     }
-  }, [isDarkMode])
+  }, [isDarkMode]);
 
   return (
     <MapContext.Provider value={mapInstance}>
@@ -52,5 +225,5 @@ export default function Map() {
         <div ref={mapContainer} className="flex-grow" />
       </div>
     </MapContext.Provider>
-  )
+  );
 }

@@ -1,7 +1,5 @@
-// src/components/menu/ZoomControl.tsx
 import { useMap } from '../../contexts/MapContext'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlus, faMinus } from '@fortawesome/free-solid-svg-icons'
+import { Plus, Minus } from 'lucide-react'
 import { useTheme } from '../../contexts/ThemeContext'
 
 export default function ZoomControl() {
@@ -18,8 +16,7 @@ export default function ZoomControl() {
             ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
           aria-label="Zoom out"
         >
-          <FontAwesomeIcon 
-            icon={faMinus} 
+          <Minus 
             className="h-5 w-5 text-blue-600" 
           />
         </button>
@@ -29,8 +26,7 @@ export default function ZoomControl() {
             ${isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-100'}`}
           aria-label="Zoom in"
         >
-          <FontAwesomeIcon 
-            icon={faPlus} 
+          <Plus 
             className="h-5 w-5 text-blue-600" 
           />
         </button>

@@ -16,6 +16,14 @@ async def create_boat(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Check if user already has a boat
+    existing_boat = db.query(Boat).filter(Boat.user_id == current_user.id).first()
+    if existing_boat:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already has a boat registered"
+        )
+
     db_boat = Boat(
         name=boat.name,
         latitude=boat.latitude,

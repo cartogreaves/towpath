@@ -1,9 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useContext } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { UserContext } from '../../contexts/UserContext'; // Updated import path
-import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import { UserContext } from '../../contexts/UserContext';
+import { Sun, Moon } from 'lucide-react';
 
 export default function ProfileMenu() {
   const navigate = useNavigate();
@@ -13,7 +12,7 @@ export default function ProfileMenu() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    resetUser(); // Reset the user context when logging out
+    resetUser();
     navigate('/');
   };
 
@@ -46,10 +45,11 @@ export default function ProfileMenu() {
                     ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                 >
                   <div className="flex items-center">
-                    <FontAwesomeIcon 
-                      icon={isDarkMode ? faSun : faMoon} 
-                      className="mr-2" 
-                    />
+                    {isDarkMode ? (
+                      <Sun className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Moon className="mr-2 h-4 w-4" />
+                    )}
                     {isDarkMode ? 'Light Mode' : 'Dark Mode'}
                   </div>
                 </button>
