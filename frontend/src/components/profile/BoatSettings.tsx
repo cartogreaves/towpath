@@ -292,36 +292,6 @@ export default function BoatSettings() {
                 style={{ minHeight: '256px' }}
               />
               <div className="mt-2 grid grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Latitude
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.latitude.toFixed(6)}
-                    readOnly
-                    className={`mt-1 block w-full rounded-md shadow-sm p-2 ${
-                      isDarkMode
-                        ? 'bg-gray-700 border-gray-600 text-white'
-                        : 'bg-gray-100 border-gray-300 text-gray-900'
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label className={`block text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Longitude
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.longitude.toFixed(6)}
-                    readOnly
-                    className={`mt-1 block w-full rounded-md shadow-sm p-2 ${
-                      isDarkMode
-                        ? 'bg-gray-700 border-gray-600 text-white'
-                        : 'bg-gray-100 border-gray-300 text-gray-900'
-                    }`}
-                  />
-                </div>
               </div>
             </div>
 
