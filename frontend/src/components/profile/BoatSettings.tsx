@@ -12,6 +12,7 @@ interface Boat {
   name: string;
   latitude: number;
   longitude: number;
+  share_location_with_friends: boolean;
 }
 
 export default function BoatSettings() {
@@ -29,12 +30,15 @@ export default function BoatSettings() {
   const [formData, setFormData] = useState({
     name: '',
     latitude: 51.3475,
-    longitude: -2.2507
+    longitude: -2.2507,
+    share_location_with_friends: false
   });
 
   const fetchBoat = async () => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) return;
+
       const response = await axios.get('http://localhost:8000/boats/my-boats', {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -43,7 +47,8 @@ export default function BoatSettings() {
         setFormData({
           name: response.data[0].name,
           latitude: response.data[0].latitude,
-          longitude: response.data[0].longitude
+          longitude: response.data[0].longitude,
+          share_location_with_friends: response.data[0].share_location_with_friends
         });
       }
     } catch (error: any) {
@@ -127,7 +132,8 @@ export default function BoatSettings() {
     setFormData({
       name: '',
       latitude: 51.3475,
-      longitude: -2.2507
+      longitude: -2.2507,
+      share_location_with_friends: false
     });
   };
 
@@ -171,7 +177,12 @@ export default function BoatSettings() {
       });
       setMessage({ type: 'success', text: 'Boat deleted successfully' });
       setBoat(null);
-      setFormData({ name: '', latitude: 51.3475, longitude: -2.2507 });
+      setFormData({ 
+        name: '', 
+        latitude: 51.3475, 
+        longitude: -2.2507,
+        share_location_with_friends: false 
+      });
     } catch (error: any) {
       setMessage({
         type: 'error',
@@ -183,11 +194,9 @@ export default function BoatSettings() {
   return (
     <div className="space-y-6">
       {message.text && (
-        <div 
-          className={`p-4 rounded-lg ${
-            message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-          }`}
-        >
+        <div className={`p-4 rounded-lg ${
+          message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+        }`}>
           {message.text}
         </div>
       )}
@@ -232,6 +241,9 @@ export default function BoatSettings() {
                     </h4>
                     <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {boat.latitude.toFixed(6)}, {boat.longitude.toFixed(6)}
+                    </p>
+                    <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Location sharing with friends: {boat.share_location_with_friends ? 'Enabled' : 'Disabled'}
                     </p>
                   </div>
                   <div className="flex space-x-2 mt-4">
@@ -283,6 +295,36 @@ export default function BoatSettings() {
                     />
                   </div>
 
+                  {/* Location Sharing Toggle */}
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-3">
+                      <button
+                        role="switch"
+                        aria-checked={formData.share_location_with_friends}
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          share_location_with_friends: !prev.share_location_with_friends
+                        }))}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                          formData.share_location_with_friends ? 'bg-blue-600' : 'bg-gray-400'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            formData.share_location_with_friends ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                      <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Share boat location with friends
+                      </label>
+                    </div>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      By enabling this option, you agree to share your boat's location with your accepted friends on Towpath.
+                      You can disable this at any time.
+                    </p>
+                  </div>
+
                   <div className="flex space-x-3">
                     <button
                       onClick={handleSubmit}
@@ -297,7 +339,8 @@ export default function BoatSettings() {
                           setFormData({
                             name: boat.name,
                             latitude: boat.latitude,
-                            longitude: boat.longitude
+                            longitude: boat.longitude,
+                            share_location_with_friends: boat.share_location_with_friends
                           });
                         }
                       }}

@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { UserProvider } from './contexts/UserContext'
 import { BoatProvider } from './contexts/BoatContext'
+import { FriendsProvider } from './contexts/FriendsContext'
 import App from './App'
 import './index.css'
 
@@ -14,7 +15,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <ThemeProvider>
         <UserProvider>
           <BoatProvider>
-            <App />
+            <FriendsProvider>
+              <App />
+            </FriendsProvider>
           </BoatProvider>
         </UserProvider>
       </ThemeProvider>

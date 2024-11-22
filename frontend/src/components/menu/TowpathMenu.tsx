@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
+import FriendsMenu from './FriendsMenu'
 
 export default function TowpathMenu() {
   const { isDarkMode } = useTheme()
+  const token = localStorage.getItem('token')
 
   return (
     <div className="absolute top-4 left-4 z-10">
@@ -26,6 +28,7 @@ export default function TowpathMenu() {
               <div className={`text-[13px] font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Community</div>
             </Link>
             <div className="py-1">
+              {token && <FriendsMenu isDarkMode={isDarkMode} />}
               <button className={`block px-4 py-2 text-sm w-full text-left
                 ${isDarkMode ? 'text-white hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>
                 Waterway Features

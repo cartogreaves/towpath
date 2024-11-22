@@ -13,7 +13,7 @@ export default function ProfileMenu() {
   const { clearBoatMarker } = useBoat();
 
   const handleLogout = () => {
-    clearBoatMarker();
+    clearBoatMarker(); // This will now also clear friend markers
     localStorage.removeItem('token');
     resetUser();
     navigate('/');

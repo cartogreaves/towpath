@@ -1,3 +1,4 @@
+# app/models/user.py
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -14,5 +15,11 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Add this relationship
+    # Relationships
     boats = relationship("Boat", back_populates="user")
+    friendships_initiated = relationship("Friendship", 
+                                      foreign_keys="[Friendship.user_id]",
+                                      back_populates="user")
+    friendships_received = relationship("Friendship", 
+                                      foreign_keys="[Friendship.friend_id]",
+                                      back_populates="friend")
