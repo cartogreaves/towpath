@@ -129,7 +129,11 @@ const FriendsMenu = ({ isDarkMode }) => {
       await axios.delete(`http://localhost:8000/friends/${friendshipId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      await fetchFriends(); // Refresh the friends list
+      
+      // Refresh both the friends list and the map markers
+      await fetchFriends();
+      refreshFriendBoats(); // Add this line to immediately update the map
+      
     } catch (error) {
       console.error('Failed to remove friend:', error);
     }
