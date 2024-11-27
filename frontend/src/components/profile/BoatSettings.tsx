@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { MAP_STYLES } from '../../constants/mapStyles';
 import BoatMarker from '../markers/BoatMarker';
+import { addCanalsLayer } from '../../utils/mapLayers';
 
 interface Boat {
   id: number;
@@ -86,31 +87,36 @@ export default function BoatSettings() {
       'top-right'
     );
 
-    // Create marker element
-    const el = document.createElement('div');
-    markerElRef.current = el;
-    
-    // Render boat marker
-    ReactDOM.render(
-      <BoatMarker size={36} isDarkMode={isDarkMode} />,
-      el
-    );
+    // Add canals layer once the map is loaded
+    map.current.on('load', async () => {
+      addCanalsLayer(map.current!);
 
-    marker.current = new maplibregl.Marker({
-      element: el,
-      draggable: true
-    })
-      .setLngLat([formData.longitude, formData.latitude])
-      .addTo(map.current);
+      // Create marker element
+      const el = document.createElement('div');
+      markerElRef.current = el;
+      
+      // Render boat marker
+      ReactDOM.render(
+        <BoatMarker size={36} isDarkMode={isDarkMode} />,
+        el
+      );
 
-    marker.current.on('dragend', () => {
-      if (!marker.current) return;
-      const lngLat = marker.current.getLngLat();
-      setFormData(prev => ({
-        ...prev,
-        latitude: lngLat.lat,
-        longitude: lngLat.lng
-      }));
+      marker.current = new maplibregl.Marker({
+        element: el,
+        draggable: true
+      })
+        .setLngLat([formData.longitude, formData.latitude])
+        .addTo(map.current!);
+
+      marker.current.on('dragend', () => {
+        if (!marker.current) return;
+        const lngLat = marker.current.getLngLat();
+        setFormData(prev => ({
+          ...prev,
+          latitude: lngLat.lat,
+          longitude: lngLat.lng
+        }));
+      });
     });
 
     return () => {
@@ -121,9 +127,16 @@ export default function BoatSettings() {
     };
   }, [isDarkMode, isAddingNew, boat, formData.latitude, formData.longitude]);
 
+
   useEffect(() => {
     if (map.current) {
+      
       map.current.setStyle(isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light);
+      
+      // Wait for the style to load before re-adding the canals layer
+      map.current.once('style.load', async () => {
+        addCanalsLayer(map.current!);
+      });
     }
   }, [isDarkMode]);
 

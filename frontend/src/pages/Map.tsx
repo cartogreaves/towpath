@@ -13,6 +13,7 @@ import FriendBoatMarker from '../components/markers/FriendBoatMarker';
 import { MAP_STYLES } from '../constants/mapStyles';
 import { useBoat } from '../contexts/BoatContext';
 import { useFriends } from '../contexts/FriendsContext';
+import { addCanalsLayer } from '../utils/mapLayers';
 
 interface Boat {
   id: number;
@@ -330,7 +331,9 @@ export default function Map() {
         attributionControl: false
       });
 
-      map.on('load', () => {
+      map.on('load', async () => {
+        // Add the canals layer first so it appears below markers
+        addCanalsLayer(map);
         setMapInstance(map);
         fetchAndDisplayBoat(map);
       });
@@ -379,18 +382,22 @@ export default function Map() {
   // Handle theme changes
   useEffect(() => {
     if (mapInstance) {
-      mapInstance.setStyle(isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light);
-      updateMarkerTheme();
       
-      // Update popup theme if it exists
-      if (boatRef.current) {
-        popupRef.current?.remove();
-        popupRef.current = createPopup(boatRef.current);
-      }
+      mapInstance.setStyle(isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light);
+      
+      // Wait for the style to load before re-adding the canals layer
+      mapInstance.once('style.load', () => {
+        addCanalsLayer(mapInstance);
+        updateMarkerTheme();
+        
+        if (boatRef.current) {
+          popupRef.current?.remove();
+          popupRef.current = createPopup(boatRef.current);
+        }
 
-      // Update friend markers theme
-      friendBoats.forEach(boat => {
-        createFriendMarker(boat, mapInstance);
+        friendBoats.forEach(boat => {
+          createFriendMarker(boat, mapInstance);
+        });
       });
     }
   }, [isDarkMode]);

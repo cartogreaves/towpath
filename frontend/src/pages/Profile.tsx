@@ -21,7 +21,7 @@ export default function Profile() {
         <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} shadow rounded-lg`}>
           {/* Header */}
           <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <h1 className="text-2xl font-semibold">Welcome to towpath {username}</h1>
+            <h1 className="text-2xl font-semibold">Your Towpath Profile</h1>
           </div>
 
           {/* Navigation */}

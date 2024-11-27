@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, boats, friends
+from app.api import auth, boats, friends, features
 
 app = FastAPI(title="Towpath Community API")
 
@@ -16,6 +16,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(boats.router, prefix="/boats", tags=["boats"])
 app.include_router(friends.router, prefix="/friends", tags=["friends"])
+app.include_router(features.router, prefix="/features", tags=["features"])
 
 @app.get("/")
 async def root():
