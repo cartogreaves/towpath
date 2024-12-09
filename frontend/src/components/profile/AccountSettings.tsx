@@ -2,11 +2,9 @@ import React, { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import EmojiPicker from 'emoji-picker-react';
 import { UserContext } from '../../contexts/UserContext';
-import { useTheme } from '../../contexts/ThemeContext';
 
 export default function AccountSettings() {
   const { avatar, setAvatar, username, setUsername } = useContext(UserContext);
-  const { isDarkMode } = useTheme();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isEditing, setIsEditing] = useState({
     email: false,
@@ -69,12 +67,12 @@ export default function AccountSettings() {
     } catch (error) {
       setMessage({ 
         type: 'error', 
-        text: error.response?.data?.detail || 'Failed to update avatar'
+        text: 'Failed to update avatar'
       });
     }
   };
 
-  const handleSubmit = async (field) => {
+  const handleSubmit = async (field: string) => {
     try {
       const token = localStorage.getItem('token');
       const endpoint = 'http://localhost:8000/auth/update';
@@ -138,8 +136,7 @@ export default function AccountSettings() {
       
       await fetchUserData();
       
-    } catch (error) {
-      console.error('Update error:', error);
+    } catch (error: any) {
       setMessage({ 
         type: 'error', 
         text: error.response?.data?.detail || `Failed to update ${field}`
@@ -151,41 +148,39 @@ export default function AccountSettings() {
     <div className="space-y-6">
       {message.text && (
         <div className={`p-4 rounded-lg ${
-          message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          message.type === 'error' ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'
         }`}>
           {message.text}
         </div>
       )}
 
-      <div className={`rounded-lg shadow p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className="rounded-lg shadow bg-gray-800 p-6">
         <div className="flex items-center space-x-4 mb-6">
           <div className="relative">
             <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className={`text-4xl bg-transparent rounded-full p-2 transition-colors ${
-                isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-              }`}
+              className="text-4xl bg-transparent rounded-full p-2 transition-colors hover:bg-gray-700"
               aria-label="Change avatar emoji"
             >
               {avatar}
             </button>
             {showEmojiPicker && (
               <div className="absolute top-full left-0 mt-2 z-50">
-                <div className={`rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="rounded-lg shadow-lg bg-gray-800">
                   <EmojiPicker
                     onEmojiClick={handleEmojiSelect}
                     autoFocusSearch={false}
-                    theme={isDarkMode ? 'dark' : 'light'}
+                    theme="dark"
                   />
                 </div>
               </div>
             )}
           </div>
           <div>
-            <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h3 className="text-lg font-medium text-white">
               Avatar
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-400">
               Click to select an emoji avatar
             </p>
           </div>
@@ -194,7 +189,7 @@ export default function AccountSettings() {
         <div className="space-y-4">
           {/* Email Field */}
           <div className="space-y-2">
-            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium text-gray-200">
               Email
             </label>
             {isEditing.email ? (
@@ -203,11 +198,9 @@ export default function AccountSettings() {
                   type="email"
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className={`flex-1 rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
+                  className="flex-1 rounded-md border px-3 py-2 text-sm 
+                    bg-gray-700 border-gray-600 text-white placeholder-gray-400 
+                    focus:ring-blue-500 focus:border-blue-500"
                 />
                 <button
                   onClick={() => handleSubmit('email')}
@@ -220,27 +213,19 @@ export default function AccountSettings() {
                     setIsEditing({ ...isEditing, email: false });
                     fetchUserData();
                   }}
-                  className={`px-4 py-2 border rounded-md text-sm ${
-                    isDarkMode
-                      ? 'border-gray-600 hover:bg-gray-700 text-gray-200'
-                      : 'border-gray-300 hover:bg-gray-100 text-gray-700'
-                  }`}
+                  className="px-4 py-2 border border-gray-600 rounded-md text-sm 
+                    hover:bg-gray-700 text-gray-200"
                 >
                   Cancel
                 </button>
               </div>
             ) : (
               <div className="flex justify-between items-center">
-                <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>
-                  {formData.email}
-                </span>
+                <span className="text-white">{formData.email}</span>
                 <button
                   onClick={() => setIsEditing({ ...isEditing, email: true })}
-                  className={`px-4 py-2 border rounded-md text-sm ${
-                    isDarkMode
-                      ? 'border-gray-600 hover:bg-gray-700 text-gray-200'
-                      : 'border-gray-300 hover:bg-gray-100 text-gray-700'
-                  }`}
+                  className="px-4 py-2 border border-gray-600 rounded-md text-sm 
+                    hover:bg-gray-700 text-gray-200"
                 >
                   Change
                 </button>
@@ -248,9 +233,9 @@ export default function AccountSettings() {
             )}
           </div>
 
-          {/* Username Field - Same pattern as Email */}
+          {/* Username Field */}
           <div className="space-y-2">
-            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium text-gray-200">
               Username
             </label>
             {isEditing.username ? (
@@ -258,11 +243,9 @@ export default function AccountSettings() {
                 <input
                   value={formData.username}
                   onChange={e => setFormData({ ...formData, username: e.target.value })}
-                  className={`flex-1 rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
+                  className="flex-1 rounded-md border px-3 py-2 text-sm 
+                    bg-gray-700 border-gray-600 text-white placeholder-gray-400 
+                    focus:ring-blue-500 focus:border-blue-500"
                 />
                 <button
                   onClick={() => handleSubmit('username')}
@@ -275,27 +258,19 @@ export default function AccountSettings() {
                     setIsEditing({ ...isEditing, username: false });
                     fetchUserData();
                   }}
-                  className={`px-4 py-2 border rounded-md text-sm ${
-                    isDarkMode
-                      ? 'border-gray-600 hover:bg-gray-700 text-gray-200'
-                      : 'border-gray-300 hover:bg-gray-100 text-gray-700'
-                  }`}
+                  className="px-4 py-2 border border-gray-600 rounded-md text-sm 
+                    hover:bg-gray-700 text-gray-200"
                 >
                   Cancel
                 </button>
               </div>
             ) : (
               <div className="flex justify-between items-center">
-                <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>
-                  {formData.username}
-                </span>
+                <span className="text-white">{formData.username}</span>
                 <button
                   onClick={() => setIsEditing({ ...isEditing, username: true })}
-                  className={`px-4 py-2 border rounded-md text-sm ${
-                    isDarkMode
-                      ? 'border-gray-600 hover:bg-gray-700 text-gray-200'
-                      : 'border-gray-300 hover:bg-gray-100 text-gray-700'
-                  }`}
+                  className="px-4 py-2 border border-gray-600 rounded-md text-sm 
+                    hover:bg-gray-700 text-gray-200"
                 >
                   Change
                 </button>
@@ -305,7 +280,7 @@ export default function AccountSettings() {
 
           {/* Password Field */}
           <div className="space-y-2">
-            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+            <label className="block text-sm font-medium text-gray-200">
               Password
             </label>
             {isEditing.password ? (
@@ -315,13 +290,11 @@ export default function AccountSettings() {
                     key={field}
                     type="password"
                     placeholder={field.replace(/([A-Z])/g, ' $1').toLowerCase()}
-                    value={formData[field]}
+                    value={formData[field as keyof typeof formData]}
                     onChange={e => setFormData({ ...formData, [field]: e.target.value })}
-                    className={`w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDarkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className="w-full rounded-md border px-3 py-2 text-sm 
+                      bg-gray-700 border-gray-600 text-white placeholder-gray-400 
+                      focus:ring-blue-500 focus:border-blue-500"
                   />
                 ))}
                 <div className="flex space-x-2 pt-2">
@@ -341,11 +314,8 @@ export default function AccountSettings() {
                         confirmPassword: ''
                       }));
                     }}
-                    className={`px-4 py-2 border rounded-md text-sm ${
-                      isDarkMode
-                        ? 'border-gray-600 hover:bg-gray-700 text-gray-200'
-                        : 'border-gray-300 hover:bg-gray-100 text-gray-700'
-                    }`}
+                    className="px-4 py-2 border border-gray-600 rounded-md text-sm 
+                      hover:bg-gray-700 text-gray-200"
                   >
                     Cancel
                   </button>
@@ -353,16 +323,11 @@ export default function AccountSettings() {
               </div>
             ) : (
               <div className="flex justify-between items-center">
-                <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>
-                  ••••••••
-                </span>
+                <span className="text-white">••••••••</span>
                 <button
                   onClick={() => setIsEditing({ ...isEditing, password: true })}
-                  className={`px-4 py-2 border rounded-md text-sm ${
-                    isDarkMode
-                      ? 'border-gray-600 hover:bg-gray-700 text-gray-200'
-                      : 'border-gray-300 hover:bg-gray-100 text-gray-700'
-                  }`}
+                  className="px-4 py-2 border border-gray-600 rounded-md text-sm 
+                    hover:bg-gray-700 text-gray-200"
                 >
                   Change
                 </button>

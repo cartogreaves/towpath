@@ -3,8 +3,7 @@ import axios from 'axios';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ReactDOM from 'react-dom';
-import { useTheme } from '../../contexts/ThemeContext';
-import { MAP_STYLES } from '../../constants/mapStyles';
+import { MAP_STYLE } from '../../constants/mapStyles';
 import BoatMarker from '../markers/BoatMarker';
 import { addCanalsLayer } from '../../utils/mapLayers';
 
@@ -17,7 +16,6 @@ interface Boat {
 }
 
 export default function BoatSettings() {
-  const { isDarkMode } = useTheme();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const marker = useRef<maplibregl.Marker | null>(null);
@@ -76,7 +74,7 @@ export default function BoatSettings() {
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light,
+      style: MAP_STYLE,
       center: [formData.longitude, formData.latitude],
       zoom: 15,
       attributionControl: false
@@ -87,17 +85,14 @@ export default function BoatSettings() {
       'top-right'
     );
 
-    // Add canals layer once the map is loaded
     map.current.on('load', async () => {
       addCanalsLayer(map.current!);
 
-      // Create marker element
       const el = document.createElement('div');
       markerElRef.current = el;
       
-      // Render boat marker
       ReactDOM.render(
-        <BoatMarker size={36} isDarkMode={isDarkMode} />,
+        <BoatMarker size={36} />,
         el
       );
 
@@ -125,20 +120,7 @@ export default function BoatSettings() {
         map.current = null;
       }
     };
-  }, [isDarkMode, isAddingNew, boat, formData.latitude, formData.longitude]);
-
-
-  useEffect(() => {
-    if (map.current) {
-      
-      map.current.setStyle(isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light);
-      
-      // Wait for the style to load before re-adding the canals layer
-      map.current.once('style.load', async () => {
-        addCanalsLayer(map.current!);
-      });
-    }
-  }, [isDarkMode]);
+  }, [isAddingNew, boat, formData.latitude, formData.longitude]);
 
   const handleAddNew = () => {
     setIsAddingNew(true);
@@ -208,16 +190,16 @@ export default function BoatSettings() {
     <div className="space-y-6">
       {message.text && (
         <div className={`p-4 rounded-lg ${
-          message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          message.type === 'error' ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'
         }`}>
           {message.text}
         </div>
       )}
 
-      <div className={`rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div className="rounded-lg shadow bg-gray-800">
+        <div className="p-6 border-b border-gray-700">
           <div className="flex justify-between items-center">
-            <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h3 className="text-lg font-medium text-white">
               Your Boat
             </h3>
             {!isLoading && !boat && !isAddingNew && (
@@ -233,7 +215,7 @@ export default function BoatSettings() {
 
         <div className="p-6">
           {isLoading ? (
-            <div className={`flex items-center justify-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <div className="flex items-center justify-center py-8 text-gray-400">
               <svg className="animate-spin h-8 w-8 text-blue-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -241,38 +223,34 @@ export default function BoatSettings() {
               <span className="text-lg">Loading...</span>
             </div>
           ) : !boat && !isAddingNew ? (
-            <p className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p className="text-center text-gray-400">
               No boat registered yet. Click "Register Your Boat" to get started.
             </p>
           ) : (
             <div className="space-y-4">
               {boat && !isAddingNew ? (
-                <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
+                <div className="p-4 rounded-lg bg-gray-700/50">
                   <div className="flex-1">
-                    <h4 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <h4 className="font-medium text-white">
                       {boat.name}
                     </h4>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <p className="text-sm text-gray-400">
                       {boat.latitude.toFixed(6)}, {boat.longitude.toFixed(6)}
                     </p>
-                    <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <p className="text-sm mt-2 text-gray-400">
                       Location sharing with friends: {boat.share_location_with_friends ? 'Enabled' : 'Disabled'}
                     </p>
                   </div>
                   <div className="flex space-x-2 mt-4">
                     <button
                       onClick={() => setIsAddingNew(true)}
-                      className={`px-3 py-1 rounded text-sm ${
-                        isDarkMode
-                          ? 'hover:bg-gray-600 text-gray-300'
-                          : 'hover:bg-gray-200 text-gray-600'
-                      }`}
+                      className="px-3 py-1 rounded text-sm hover:bg-gray-600 text-gray-300"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(boat.id)}
-                      className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
+                      className="px-3 py-1 text-sm text-red-500 hover:bg-red-500/10 rounded"
                     >
                       Delete
                     </button>
@@ -281,34 +259,30 @@ export default function BoatSettings() {
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                    <label className="block text-sm font-medium text-gray-200">
                       Boat Name
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className={`mt-1 block w-full rounded-md shadow-sm p-2 ${
-                        isDarkMode
-                          ? 'bg-gray-700 border-gray-600 text-white'
-                          : 'border-gray-300 text-gray-900'
-                      }`}
+                      className="mt-1 block w-full rounded-md shadow-sm p-2
+                        bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                       placeholder="Enter boat name"
                     />
                   </div>
 
                   <div>
-                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                    <label className="block text-sm font-medium text-gray-200">
                       Location
                     </label>
                     <div 
                       ref={mapContainer} 
-                      className="mt-1 w-full h-64 rounded-lg overflow-hidden border border-gray-300"
+                      className="mt-1 w-full h-64 rounded-lg overflow-hidden border border-gray-600"
                       style={{ minHeight: '256px' }}
                     />
                   </div>
 
-                  {/* Location Sharing Toggle */}
                   <div className="space-y-2">
                     <div className="flex items-center space-x-3">
                       <button
@@ -318,7 +292,7 @@ export default function BoatSettings() {
                           ...prev,
                           share_location_with_friends: !prev.share_location_with_friends
                         }))}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 ${
                           formData.share_location_with_friends ? 'bg-blue-600' : 'bg-gray-400'
                         }`}
                       >
@@ -328,11 +302,11 @@ export default function BoatSettings() {
                           }`}
                         />
                       </button>
-                      <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                      <label className="text-sm font-medium text-gray-200">
                         Share boat location with friends
                       </label>
                     </div>
-                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <p className="text-xs text-gray-400">
                       By enabling this option, you agree to share your boat's location with your accepted friends on Towpath.
                       You can disable this at any time.
                     </p>
@@ -357,11 +331,7 @@ export default function BoatSettings() {
                           });
                         }
                       }}
-                      className={`px-4 py-2 rounded-md text-sm font-medium ${
-                        isDarkMode
-                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                      className="px-4 py-2 rounded-md text-sm font-medium bg-gray-700 text-gray-300 hover:bg-gray-600"
                     >
                       Cancel
                     </button>

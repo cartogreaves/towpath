@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Users, UserPlus, UserMinus, Check, X, Search, ChevronRight, ChevronDown } from 'lucide-react';
 import { useFriends } from '../../contexts/FriendsContext';
 
-const FriendsMenu = ({ isDarkMode }) => {
+const FriendsMenu = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -15,7 +15,6 @@ const FriendsMenu = ({ isDarkMode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
   const { refreshFriendBoats } = useFriends();
-
 
   const fetchFriends = async () => {
     try {
@@ -49,7 +48,7 @@ const FriendsMenu = ({ isDarkMode }) => {
       const response = await axios.get(`http://localhost:8000/friends/search/${encodeURIComponent(query)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Filter out users that we've already sent requests to
+      
       const filteredResults = response.data.filter(user => 
         !friendsData.pending_sent.some(sent => sent.id === user.id) &&
         !friendsData.pending_received.some(received => received.id === user.id) &&
@@ -86,7 +85,6 @@ const FriendsMenu = ({ isDarkMode }) => {
         { headers: { Authorization: `Bearer ${token}` }}
       );
       
-      // Find the user from search results and create a pending request
       const user = searchResults.find(user => user.id === friendId);
       if (user) {
         setFriendsData(prev => ({
@@ -96,7 +94,6 @@ const FriendsMenu = ({ isDarkMode }) => {
             friendship_status: 'pending'
           }]
         }));
-        // Remove user from search results
         setSearchResults(prev => prev.filter(u => u.id !== friendId));
       }
     } catch (error) {
@@ -113,7 +110,6 @@ const FriendsMenu = ({ isDarkMode }) => {
       );
       await fetchFriends();
       if (action === 'accept') {
-        // Refresh friend boats immediately after accepting
         refreshFriendBoats();
       }
     } catch (error) {
@@ -130,9 +126,8 @@ const FriendsMenu = ({ isDarkMode }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Refresh both the friends list and the map markers
       await fetchFriends();
-      refreshFriendBoats(); // Add this line to immediately update the map
+      refreshFriendBoats();
       
     } catch (error) {
       console.error('Failed to remove friend:', error);
@@ -143,8 +138,7 @@ const FriendsMenu = ({ isDarkMode }) => {
     <div>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`flex items-center justify-between w-full px-4 py-2 text-sm
-          ${isDarkMode ? 'text-white hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
+        className="flex items-center justify-between w-full px-4 py-2 text-sm text-white hover:bg-gray-700"
       >
         <div className="flex items-center">
           <Users className="w-4 h-4 mr-2" />
@@ -165,7 +159,7 @@ const FriendsMenu = ({ isDarkMode }) => {
       {isExpanded && (
         <div className="pl-4 pr-2">
           {/* Search Section */}
-          <div className={`py-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className="py-2">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
               <input
@@ -173,42 +167,37 @@ const FriendsMenu = ({ isDarkMode }) => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearch}
-                className={`w-full pl-8 pr-4 py-2 rounded-md text-sm
-                  ${isDarkMode 
-                    ? 'bg-gray-700 text-white placeholder-gray-400' 
-                    : 'bg-gray-100 text-gray-900 placeholder-gray-500'
-                  }`}
+                className="w-full pl-8 pr-4 py-2 rounded-md text-sm
+                  bg-gray-700 text-white placeholder-gray-400"
               />
             </div>
 
             {/* Search Results */}
             {searchQuery && (
-              <div className={`mt-2 rounded-md overflow-hidden max-h-32 overflow-y-auto
-                ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+              <div className="mt-2 rounded-md overflow-hidden max-h-32 overflow-y-auto bg-gray-700">
                 {isLoading ? (
-                  <div className="p-2 text-center text-sm text-gray-500">
+                  <div className="p-2 text-center text-sm text-gray-400">
                     Searching...
                   </div>
                 ) : searchResults.length > 0 ? (
                   searchResults.map((user) => (
-                    <div key={user.id} className={`flex items-center justify-between p-2 
-                      ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'}`}>
+                    <div key={user.id} className="flex items-center justify-between p-2 hover:bg-gray-600">
                       <div className="flex items-center">
                         <span className="text-xl mr-2">{user.avatar}</span>
-                        <span className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        <span className="text-sm text-white">
                           {user.username}
                         </span>
                       </div>
                       <button
                         onClick={() => sendFriendRequest(user.id)}
-                        className="text-blue-500 hover:text-blue-600"
+                        className="text-blue-500 hover:text-blue-400"
                       >
                         <UserPlus className="h-4 w-4" />
                       </button>
                     </div>
                   ))
                 ) : (
-                  <div className="p-2 text-center text-sm text-gray-500">
+                  <div className="p-2 text-center text-sm text-gray-400">
                     No users found
                   </div>
                 )}
@@ -219,29 +208,28 @@ const FriendsMenu = ({ isDarkMode }) => {
           {/* Pending Requests Section */}
           {friendsData.pending_received.length > 0 && (
             <div className="py-2">
-              <h3 className={`text-xs font-semibold mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <h3 className="text-xs font-semibold mb-1 text-gray-400">
                 Pending Requests ({friendsData.pending_received.length})
               </h3>
               <div className="max-h-32 overflow-y-auto">
                 {friendsData.pending_received.map((request) => (
-                  <div key={request.id} className={`flex items-center justify-between p-2 rounded-md
-                    ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+                  <div key={request.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
                     <div className="flex items-center">
                       <span className="text-xl mr-2">{request.avatar}</span>
-                      <span className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      <span className="text-sm text-white">
                         {request.username}
                       </span>
                     </div>
                     <div className="flex gap-1">
                       <button
                         onClick={() => respondToRequest(request.friendship_id, 'accept')}
-                        className="text-green-500 hover:text-green-600"
+                        className="text-green-500 hover:text-green-400"
                       >
                         <Check className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => respondToRequest(request.friendship_id, 'reject')}
-                        className="text-red-500 hover:text-red-600"
+                        className="text-red-500 hover:text-red-400"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -255,20 +243,19 @@ const FriendsMenu = ({ isDarkMode }) => {
           {/* Sent Requests Section */}
           {friendsData.pending_sent.length > 0 && (
             <div className="py-2">
-              <h3 className={`text-xs font-semibold mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <h3 className="text-xs font-semibold mb-1 text-gray-400">
                 Sent Requests ({friendsData.pending_sent.length})
               </h3>
               <div className="max-h-32 overflow-y-auto">
                 {friendsData.pending_sent.map((request) => (
-                  <div key={request.id} className={`flex items-center justify-between p-2 rounded-md
-                    ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+                  <div key={request.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
                     <div className="flex items-center">
                       <span className="text-xl mr-2">{request.avatar}</span>
-                      <span className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      <span className="text-sm text-white">
                         {request.username}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-500">Pending</span>
+                    <span className="text-xs text-gray-400">Pending</span>
                   </div>
                 ))}
               </div>
@@ -277,17 +264,16 @@ const FriendsMenu = ({ isDarkMode }) => {
 
           {/* Friends List Section */}
           <div className="py-2">
-            <h3 className={`text-xs font-semibold mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            <h3 className="text-xs font-semibold mb-1 text-gray-400">
               Friends ({friendsData.friends.length})
             </h3>
             <div className="max-h-48 overflow-y-auto">
               {friendsData.friends.length > 0 ? (
                 friendsData.friends.map((friend) => (
-                  <div key={friend.id} className={`flex items-center justify-between p-2 rounded-md
-                    ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+                  <div key={friend.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
                     <div className="flex items-center">
                       <span className="text-xl mr-2">{friend.avatar}</span>
-                      <span className={`text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      <span className="text-sm text-white">
                         {friend.username}
                       </span>
                     </div>
@@ -300,7 +286,7 @@ const FriendsMenu = ({ isDarkMode }) => {
                   </div>
                 ))
               ) : (
-                <div className={`p-2 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <div className="p-2 text-center text-sm text-gray-400">
                   No friends yet
                 </div>
               )}

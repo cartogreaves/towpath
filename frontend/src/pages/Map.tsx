@@ -7,13 +7,26 @@ import TowpathMenu from '../components/menu/TowpathMenu';
 import ProfileMenu from '../components/menu/ProfileMenu';
 import ZoomControl from '../components/menu/ZoomControl';
 import { MapContext } from '../contexts/MapContext';
-import { useTheme } from '../contexts/ThemeContext';
 import BoatMarker from '../components/markers/BoatMarker';
 import FriendBoatMarker from '../components/markers/FriendBoatMarker';
-import { MAP_STYLES } from '../constants/mapStyles';
+import { MAP_STYLE } from '../constants/mapStyles';
 import { useBoat } from '../contexts/BoatContext';
 import { useFriends } from '../contexts/FriendsContext';
 import { addCanalsLayer } from '../utils/mapLayers';
+import InfoPill from '../components/features/InfoPill';
+
+interface SelectedFeature {
+  id: number;
+  type: string;
+  properties: {
+    name?: string;
+    region?: string;
+    sap_canal_code?: string;
+    sap_nav_status?: string;
+    [key: string]: any;
+  };
+  geometry: any;
+}
 
 interface Boat {
   id: number;
@@ -43,12 +56,8 @@ const MAP_LOCATIONS = {
   }
 };
 
-const BoatPopup = ({ name, isDarkMode }: { name: string; isDarkMode: boolean }) => (
-  <div className={`px-3 py-1.5 rounded-full text-blue-600 font-medium text-sm ${
-    isDarkMode 
-      ? 'bg-gray-800/90' 
-      : 'bg-white/90'
-  }`}>
+const BoatPopup = ({ name }: { name: string }) => (
+  <div className="px-3 py-1.5 rounded-full text-blue-600 font-medium text-sm bg-gray-800/90">
     {name}
   </div>
 );
@@ -61,24 +70,40 @@ export default function Map() {
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const markerElRef = useRef<HTMLDivElement | null>(null);
   const boatRef = useRef<Boat | null>(null);
-  const { isDarkMode } = useTheme();
   const { setClearBoatMarker } = useBoat();
   const [friendBoats, setFriendBoats] = useState<FriendBoat[]>([]);
   const { setRefreshFriendBoats } = useFriends();
+  const [selectedFeature, setSelectedFeature] = useState<SelectedFeature | null>(null);
 
-  const updateMarkerTheme = () => {
-    if (markerElRef.current) {
-      ReactDOM.render(
-        <BoatMarker size={25} isDarkMode={isDarkMode} />,
-        markerElRef.current
-      );
-    }
-  };
+  const setupFeatureInteractions = useCallback((map: maplibregl.Map) => {
+    map.on('click', 'canals-line', (e) => {
+      if (e.features && e.features.length > 0) {
+        setSelectedFeature(e.features[0] as SelectedFeature);
+      }
+    });
+
+    map.on('click', (e) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['canals-line']
+      });
+      if (features.length === 0) {
+        setSelectedFeature(null);
+      }
+    });
+
+    map.on('mouseenter', 'canals-line', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+
+    map.on('mouseleave', 'canals-line', () => {
+      map.getCanvas().style.cursor = '';
+    });
+  }, []);
 
   const createPopup = (boat: Boat) => {
     const popupEl = document.createElement('div');
     ReactDOM.render(
-      <BoatPopup name={boat.name} isDarkMode={isDarkMode} />,
+      <BoatPopup name={boat.name} />,
       popupEl
     );
 
@@ -93,11 +118,7 @@ export default function Map() {
   const createFriendPopup = (boat: FriendBoat) => {
     const popupEl = document.createElement('div');
     ReactDOM.render(
-      <div className={`px-3 py-1.5 rounded-full text-blue-600 font-medium text-sm ${
-        isDarkMode 
-          ? 'bg-gray-800/90' 
-          : 'bg-white/90'
-      }`}>
+      <div className="px-3 py-1.5 rounded-full text-blue-600 font-medium text-sm bg-gray-800/90">
         {boat.user_username}'s {boat.name}
       </div>,
       popupEl
@@ -111,9 +132,7 @@ export default function Map() {
     }).setDOMContent(popupEl);
   };
 
-
   const createMarker = (boat: Boat, map: maplibregl.Map) => {
-    // Clean up existing marker and popup
     if (markerRef.current) {
       markerRef.current.remove();
     }
@@ -121,28 +140,23 @@ export default function Map() {
       popupRef.current.remove();
     }
   
-    // Create marker element
     const el = document.createElement('div');
     markerElRef.current = el;
     
-    // Create popup
     popupRef.current = createPopup(boat);
   
-    // Render boat marker
     ReactDOM.render(
-      <BoatMarker size={25} isDarkMode={isDarkMode} />,
+      <BoatMarker size={25} />,
       el
     );
   
-    // Create and add marker to map
     markerRef.current = new maplibregl.Marker({
       element: el,
-      anchor: 'center', // Add this to ensure consistent positioning
+      anchor: 'center',
     })
       .setLngLat([boat.longitude, boat.latitude])
       .addTo(map);
   
-    // Add hover events
     el.addEventListener('mouseenter', () => {
       if (popupRef.current && markerRef.current) {
         popupRef.current
@@ -159,14 +173,13 @@ export default function Map() {
   };
   
   const createFriendMarker = (boat: FriendBoat, map: maplibregl.Map) => {
-    // Remove existing marker if it exists
     if (friendMarkerRefs.current[boat.id]) {
       friendMarkerRefs.current[boat.id].remove();
     }
   
     const el = document.createElement('div');
     ReactDOM.render(
-      <FriendBoatMarker size={25} isDarkMode={isDarkMode} avatar={boat.user_avatar} />,
+      <FriendBoatMarker size={25} avatar={boat.user_avatar} />,
       el
     );
   
@@ -174,12 +187,11 @@ export default function Map() {
   
     const marker = new maplibregl.Marker({
       element: el,
-      anchor: 'center', // Add this to ensure consistent positioning
+      anchor: 'center',
     })
       .setLngLat([boat.longitude, boat.latitude])
       .addTo(map);
   
-    // Add hover events
     el.addEventListener('mouseenter', () => {
       popup.setLngLat([boat.longitude, boat.latitude]).addTo(map);
     });
@@ -248,7 +260,6 @@ export default function Map() {
 
       setFriendBoats(response.data);
 
-      // Update markers for all friend boats
       Object.values(friendMarkerRefs.current).forEach(marker => marker.remove());
       friendMarkerRefs.current = {};
 
@@ -258,31 +269,12 @@ export default function Map() {
     } catch (error) {
       console.error('Failed to fetch friend boats:', error);
     }
-  }, [mapInstance, isDarkMode]);
+  }, [mapInstance]);
 
-  // Add useEffect for refresh function
   useEffect(() => {
     setRefreshFriendBoats(() => fetchFriendBoats);
     return () => setRefreshFriendBoats(() => () => {});
   }, [fetchFriendBoats, setRefreshFriendBoats]);
-
-  useEffect(() => {
-    if (!mapInstance) return;
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-      clearFriendMarkers();
-      return;
-    }
-
-    fetchFriendBoats();
-    const interval = setInterval(fetchFriendBoats, 30000);
-
-    return () => {
-      clearInterval(interval);
-      clearFriendMarkers();
-    };
-  }, [mapInstance, fetchFriendBoats]);
 
   const clearBoatMarker = () => {
     if (markerRef.current) {
@@ -310,13 +302,12 @@ export default function Map() {
     setClearBoatMarker(() => {
       return () => {
         clearBoatMarker();
-        clearFriendMarkers(); // Add this line
+        clearFriendMarkers();
       };
     });
     return () => setClearBoatMarker(() => () => {});
   }, []);
 
-  // Initial map setup
   useEffect(() => {
     if (!mapContainer.current) return;
 
@@ -325,15 +316,15 @@ export default function Map() {
       
       const map = new maplibregl.Map({
         container: mapContainer.current,
-        style: isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light,
+        style: MAP_STYLE,
         center: initialLocation.center,
         zoom: initialLocation.zoom,
         attributionControl: false
       });
 
       map.on('load', async () => {
-        // Add the canals layer first so it appears below markers
         addCanalsLayer(map);
+        setupFeatureInteractions(map);
         setMapInstance(map);
         fetchAndDisplayBoat(map);
       });
@@ -342,6 +333,8 @@ export default function Map() {
     initializeMap();
 
     return () => {
+      setSelectedFeature(null);
+
       if (markerElRef.current) {
         ReactDOM.unmountComponentAtNode(markerElRef.current);
       }
@@ -354,13 +347,11 @@ export default function Map() {
       if (mapInstance) {
         mapInstance.remove();
       }
-      // Clean up friend markers
       Object.values(friendMarkerRefs.current).forEach(marker => marker.remove());
       friendMarkerRefs.current = {};
     }
   }, []);
 
-  // Fetch friend boats periodically
   useEffect(() => {
     if (!mapInstance) return;
   
@@ -377,34 +368,17 @@ export default function Map() {
       clearInterval(interval);
       clearFriendMarkers();
     };
-  }, [mapInstance]);
-
-  // Handle theme changes
-  useEffect(() => {
-    if (mapInstance) {
-      
-      mapInstance.setStyle(isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light);
-      
-      // Wait for the style to load before re-adding the canals layer
-      mapInstance.once('style.load', () => {
-        addCanalsLayer(mapInstance);
-        updateMarkerTheme();
-        
-        if (boatRef.current) {
-          popupRef.current?.remove();
-          popupRef.current = createPopup(boatRef.current);
-        }
-
-        friendBoats.forEach(boat => {
-          createFriendMarker(boat, mapInstance);
-        });
-      });
-    }
-  }, [isDarkMode]);
+  }, [mapInstance, fetchFriendBoats]);
 
   return (
     <MapContext.Provider value={mapInstance}>
-      <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className="h-screen flex flex-col bg-gray-900">
+        {selectedFeature && (
+          <InfoPill 
+            title={selectedFeature.properties.name || 'Canal'}
+            feature={selectedFeature}
+          />
+        )}
         <TowpathMenu />
         <ZoomControl />
         <ProfileMenu />
