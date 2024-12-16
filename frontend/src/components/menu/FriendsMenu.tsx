@@ -138,10 +138,9 @@ const FriendsMenu = () => {
     <div>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-between w-full px-4 py-2 text-sm text-white hover:bg-gray-700"
+        className="flex items-center justify-between w-full px-4 py-2 text-base text-white hover:bg-gray-700"
       >
         <div className="flex items-center">
-          <Users className="w-4 h-4 mr-2" />
           <span>Friends</span>
           {(friendsData.pending_received.length > 0) && (
             <span className="ml-2 px-2 py-0.5 text-xs bg-blue-500 text-white rounded-full">
@@ -167,7 +166,7 @@ const FriendsMenu = () => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={handleSearch}
-                className="w-full pl-8 pr-4 py-2 rounded-md text-sm
+                className="w-full pl-8 pr-4 py-2 rounded-md text-base
                   bg-gray-700 text-white placeholder-gray-400"
               />
             </div>
@@ -176,7 +175,7 @@ const FriendsMenu = () => {
             {searchQuery && (
               <div className="mt-2 rounded-md overflow-hidden max-h-32 overflow-y-auto bg-gray-700">
                 {isLoading ? (
-                  <div className="p-2 text-center text-sm text-gray-400">
+                  <div className="p-2 text-center text-base text-gray-400">
                     Searching...
                   </div>
                 ) : searchResults.length > 0 ? (
@@ -184,7 +183,7 @@ const FriendsMenu = () => {
                     <div key={user.id} className="flex items-center justify-between p-2 hover:bg-gray-600">
                       <div className="flex items-center">
                         <span className="text-xl mr-2">{user.avatar}</span>
-                        <span className="text-sm text-white">
+                        <span className="text-base text-white">
                           {user.username}
                         </span>
                       </div>
@@ -197,7 +196,7 @@ const FriendsMenu = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="p-2 text-center text-sm text-gray-400">
+                  <div className="p-2 text-center text-base text-gray-400">
                     No users found
                   </div>
                 )}
@@ -216,7 +215,7 @@ const FriendsMenu = () => {
                   <div key={request.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
                     <div className="flex items-center">
                       <span className="text-xl mr-2">{request.avatar}</span>
-                      <span className="text-sm text-white">
+                      <span className="text-base text-white">
                         {request.username}
                       </span>
                     </div>
@@ -243,7 +242,7 @@ const FriendsMenu = () => {
           {/* Sent Requests Section */}
           {friendsData.pending_sent.length > 0 && (
             <div className="py-2">
-              <h3 className="text-xs font-semibold mb-1 text-gray-400">
+              <h3 className="text-xs font-medium mb-1 text-gray-400">
                 Sent Requests ({friendsData.pending_sent.length})
               </h3>
               <div className="max-h-32 overflow-y-auto">
@@ -251,7 +250,7 @@ const FriendsMenu = () => {
                   <div key={request.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
                     <div className="flex items-center">
                       <span className="text-xl mr-2">{request.avatar}</span>
-                      <span className="text-sm text-white">
+                      <span className="text-base text-white">
                         {request.username}
                       </span>
                     </div>
@@ -264,7 +263,7 @@ const FriendsMenu = () => {
 
           {/* Friends List Section */}
           <div className="py-2">
-            <h3 className="text-xs font-semibold mb-1 text-gray-400">
+            <h3 className="text-xs font-medium mb-1 text-gray-400">
               Friends ({friendsData.friends.length})
             </h3>
             <div className="max-h-48 overflow-y-auto">
@@ -273,7 +272,7 @@ const FriendsMenu = () => {
                   <div key={friend.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-700">
                     <div className="flex items-center">
                       <span className="text-xl mr-2">{friend.avatar}</span>
-                      <span className="text-sm text-white">
+                      <span className="text-base text-white">
                         {friend.username}
                       </span>
                     </div>
@@ -286,7 +285,7 @@ const FriendsMenu = () => {
                   </div>
                 ))
               ) : (
-                <div className="p-2 text-center text-sm text-gray-400">
+                <div className="p-2 text-center text-base text-gray-400">
                   No friends yet
                 </div>
               )}

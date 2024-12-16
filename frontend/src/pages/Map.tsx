@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import axios from 'axios';
 import ReactDOM from 'react-dom';
 import TowpathMenu from '../components/menu/TowpathMenu';
-import ProfileMenu from '../components/menu/ProfileMenu';
 import ZoomControl from '../components/menu/ZoomControl';
 import { MapContext } from '../contexts/MapContext';
 import BoatMarker from '../components/markers/BoatMarker';
 import FriendBoatMarker from '../components/markers/FriendBoatMarker';
-import { MAP_STYLE } from '../constants/mapStyles';
+import { MAP_STYLE, MAPBOX_ACCESS_TOKEN } from '../constants/mapConfig';
 import { useBoat } from '../contexts/BoatContext';
 import { useFriends } from '../contexts/FriendsContext';
 import { addCanalsLayer } from '../utils/mapLayers';
 import InfoPill from '../components/features/InfoPill';
+
+mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
 
 interface SelectedFeature {
   id: number;
@@ -64,10 +65,10 @@ const BoatPopup = ({ name }: { name: string }) => (
 
 export default function Map() {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null);
-  const markerRef = useRef<maplibregl.Marker | null>(null);
-  const friendMarkerRefs = useRef<{ [key: number]: maplibregl.Marker }>({});
-  const popupRef = useRef<maplibregl.Popup | null>(null);
+  const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const friendMarkerRefs = useRef<{ [key: number]: mapboxgl.Marker }>({});
+  const popupRef = useRef<mapboxgl.Popup | null>(null);
   const markerElRef = useRef<HTMLDivElement | null>(null);
   const boatRef = useRef<Boat | null>(null);
   const { setClearBoatMarker } = useBoat();
@@ -75,7 +76,7 @@ export default function Map() {
   const { setRefreshFriendBoats } = useFriends();
   const [selectedFeature, setSelectedFeature] = useState<SelectedFeature | null>(null);
 
-  const setupFeatureInteractions = useCallback((map: maplibregl.Map) => {
+  const setupFeatureInteractions = useCallback((map: mapboxgl.Map) => {
     map.on('click', 'canals-line', (e) => {
       if (e.features && e.features.length > 0) {
         setSelectedFeature(e.features[0] as SelectedFeature);
@@ -107,7 +108,7 @@ export default function Map() {
       popupEl
     );
 
-    return new maplibregl.Popup({
+    return new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
       offset: [0, -20],
@@ -124,7 +125,7 @@ export default function Map() {
       popupEl
     );
 
-    return new maplibregl.Popup({
+    return new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
       offset: [0, -20],
@@ -132,7 +133,7 @@ export default function Map() {
     }).setDOMContent(popupEl);
   };
 
-  const createMarker = (boat: Boat, map: maplibregl.Map) => {
+  const createMarker = (boat: Boat, map: mapboxgl.Map) => {
     if (markerRef.current) {
       markerRef.current.remove();
     }
@@ -150,7 +151,7 @@ export default function Map() {
       el
     );
   
-    markerRef.current = new maplibregl.Marker({
+    markerRef.current = new mapboxgl.Marker({
       element: el,
       anchor: 'center',
     })
@@ -172,7 +173,7 @@ export default function Map() {
     });
   };
   
-  const createFriendMarker = (boat: FriendBoat, map: maplibregl.Map) => {
+  const createFriendMarker = (boat: FriendBoat, map: mapboxgl.Map) => {
     if (friendMarkerRefs.current[boat.id]) {
       friendMarkerRefs.current[boat.id].remove();
     }
@@ -185,7 +186,7 @@ export default function Map() {
   
     const popup = createFriendPopup(boat);
   
-    const marker = new maplibregl.Marker({
+    const marker = new mapboxgl.Marker({
       element: el,
       anchor: 'center',
     })
@@ -230,7 +231,7 @@ export default function Map() {
     }
   };
 
-  const fetchAndDisplayBoat = async (map: maplibregl.Map) => {
+  const fetchAndDisplayBoat = async (map: mapboxgl.Map) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -314,7 +315,7 @@ export default function Map() {
     const initializeMap = async () => {
       const initialLocation = await determineMapCenter();
       
-      const map = new maplibregl.Map({
+      const map = new mapboxgl.Map({
         container: mapContainer.current,
         style: MAP_STYLE,
         center: initialLocation.center,
@@ -381,7 +382,6 @@ export default function Map() {
         )}
         <TowpathMenu />
         <ZoomControl />
-        <ProfileMenu />
         <div ref={mapContainer} className="flex-grow" />
       </div>
     </MapContext.Provider>

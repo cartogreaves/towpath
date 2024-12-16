@@ -1,1 +1,0 @@
-export const MAP_STYLE = 'https://api.maptiler.com/maps/basic-v2-dark/style.json?key=iyDUwVavsj7dSscbvWWe';

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import TowpathHomeButton from '../components/menu/TowpathHomeButton';
-import ProfileMenu from '../components/menu/ProfileMenu';
 import AccountSettings from '../components/profile/AccountSettings';
 import BoatSettings from '../components/profile/BoatSettings';
 
@@ -10,7 +9,6 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-gray-900">
       <TowpathHomeButton />
-      <ProfileMenu />
       
       {/* Main content container with padding for fixed elements */}
       <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">

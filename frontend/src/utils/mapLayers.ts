@@ -1,5 +1,5 @@
 // src/utils/mapLayers.ts
-import type { Map } from 'maplibre-gl';
+import type { Map } from 'mapbox-gl';
 
 export const addCanalsLayer = (map: Map) => {
   map.addSource('canals', {
@@ -15,9 +15,9 @@ export const addCanalsLayer = (map: Map) => {
     source: 'canals',
     'source-layer': 'canals',
     paint: {
-      'line-color': '#4a80f5',
+      'line-color': '#2463EB',
       'line-width': 12,
-      'line-opacity': 0.1
+      'line-opacity': 0.3
     }
   });
 
@@ -27,9 +27,9 @@ export const addCanalsLayer = (map: Map) => {
     source: 'canals',
     'source-layer': 'canals',
     paint: {
-      'line-color': '#4a80f5',
+      'line-color': '#2463EB',
       'line-width': 8,
-      'line-opacity': 0.15
+      'line-opacity': 0.5
     }
   });
 
@@ -39,9 +39,9 @@ export const addCanalsLayer = (map: Map) => {
     source: 'canals',
     'source-layer': 'canals',
     paint: {
-      'line-color': '#4a80f5',
-      'line-width': 3,
-      'line-opacity': 0.8
+      'line-color': '#2463EB',
+      'line-width': 5,
+      'line-opacity': 1
     }
   });
 };

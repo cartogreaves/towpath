@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-.maplibregl-canvas {
+.mapboxgl-canvas {
   width: 100% !important;
   height: 100% !important;
 }
@@ -12,12 +12,12 @@
   z-index: 1;
 }
 
-.boat-name-popup .maplibregl-popup-content {
+.boat-name-popup .mapboxgl-popup-content {
   padding: 0 !important;
   border-radius: 9999px !important;
   background: transparent !important;
 }
 
-.boat-name-popup .maplibregl-popup-tip {
+.boat-name-popup .mapboxgl-popup-tip {
   display: none !important;
 }

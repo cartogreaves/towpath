@@ -1,0 +1,2 @@
+export const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoicmpoYXJncmVhdmVzIiwiYSI6ImNtNGhuN2NpaDBhZDkyanNmd3lmeDVoNDAifQ.tsJ9m3WtZhX1PQLJOo3-ow';
+export const MAP_STYLE = 'mapbox://styles/rjhargreaves/cm4q3ys08008v01qvhqwoghjt';

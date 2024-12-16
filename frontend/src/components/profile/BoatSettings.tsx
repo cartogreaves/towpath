@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import ReactDOM from 'react-dom';
-import { MAP_STYLE } from '../../constants/mapStyles';
+import { MAP_STYLE, MAPBOX_ACCESS_TOKEN } from '../../constants/mapConfig';
 import BoatMarker from '../markers/BoatMarker';
 import { addCanalsLayer } from '../../utils/mapLayers';
+
+// Set Mapbox access token
+mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
 
 interface Boat {
   id: number;
@@ -17,8 +20,8 @@ interface Boat {
 
 export default function BoatSettings() {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<maplibregl.Map | null>(null);
-  const marker = useRef<maplibregl.Marker | null>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const marker = useRef<mapboxgl.Marker | null>(null);
   const markerElRef = useRef<HTMLDivElement | null>(null);
   
   const [boat, setBoat] = useState<Boat | null>(null);
@@ -72,7 +75,7 @@ export default function BoatSettings() {
       map.current = null;
     }
 
-    map.current = new maplibregl.Map({
+    map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: MAP_STYLE,
       center: [formData.longitude, formData.latitude],
@@ -80,8 +83,9 @@ export default function BoatSettings() {
       attributionControl: false
     });
 
+    // Use Mapbox navigation control
     map.current.addControl(
-      new maplibregl.NavigationControl({ showCompass: false }),
+      new mapboxgl.NavigationControl({ showCompass: false }),
       'top-right'
     );
 
@@ -96,7 +100,7 @@ export default function BoatSettings() {
         el
       );
 
-      marker.current = new maplibregl.Marker({
+      marker.current = new mapboxgl.Marker({
         element: el,
         draggable: true
       })
@@ -118,6 +122,9 @@ export default function BoatSettings() {
       if (map.current) {
         map.current.remove();
         map.current = null;
+      }
+      if (markerElRef.current) {
+        ReactDOM.unmountComponentAtNode(markerElRef.current);
       }
     };
   }, [isAddingNew, boat, formData.latitude, formData.longitude]);
