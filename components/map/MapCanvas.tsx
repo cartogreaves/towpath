@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
-import type { PoiType, POIWithStatus, ServiceStatus, CommunityPost } from '@/lib/types/database'
+import type { PoiType, POIWithStatus, ServiceStatus, CommunityPost, BoatLocationWithProfile, SavedRouteWithGeojson } from '@/lib/types/database'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -37,6 +37,8 @@ interface MapCanvasProps {
   selectedPoi?: POIWithStatus | null
   communityPosts?: CommunityPost[]
   selectedCommunityPost?: CommunityPost | null
+  savedRoutes?: SavedRouteWithGeojson[]
+  boatLocations?: BoatLocationWithProfile[]
   bottomPadding?: number
   isDark?: boolean
   onBoundsChange?: (bounds: MapBounds) => void
@@ -61,11 +63,20 @@ function svgToDataUrl(svg: string): string {
   return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.trim())
 }
 
+function createBoatSVG(colour: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="12" viewBox="0 0 32 12">
+    <path d="M28 2H6L2 6l4 4h22l3-3V5l-3-3z" fill="${colour}" stroke="#2C3A2A" stroke-width="1"/>
+    <path d="M28 2l2 3-2 3" fill="none" stroke="#2C3A2A" stroke-width="1"/>
+  </svg>`
+}
+
 export function MapCanvas({
   pois = [],
   selectedPoi = null,
   communityPosts = [],
   selectedCommunityPost = null,
+  savedRoutes = [],
+  boatLocations = [],
   bottomPadding = 0,
   isDark = false,
   onBoundsChange,
@@ -73,10 +84,11 @@ export function MapCanvas({
   onCommunityPostClick,
   className = '',
 }: MapCanvasProps) {
-  const containerRef  = useRef<HTMLDivElement>(null)
-  const mapRef        = useRef<mapboxgl.Map | null>(null)
-  const boundsTimer   = useRef<ReturnType<typeof setTimeout>>(null)
-  const pulseMarker   = useRef<mapboxgl.Marker | null>(null)
+  const containerRef    = useRef<HTMLDivElement>(null)
+  const mapRef          = useRef<mapboxgl.Map | null>(null)
+  const boundsTimer     = useRef<ReturnType<typeof setTimeout>>(null)
+  const pulseMarker     = useRef<mapboxgl.Marker | null>(null)
+  const boatMarkersRef  = useRef<mapboxgl.Marker[]>([])
 
   const emitBounds = useCallback((map: mapboxgl.Map) => {
     if (!onBoundsChange) return
@@ -318,6 +330,64 @@ export function MapCanvas({
       pulseMarker.current = null
     }
   }, [selectedPoi])
+
+  // Render saved route lines
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !map.isStyleLoaded()) return
+    const source = map.getSource('routes') as mapboxgl.GeoJSONSource
+    if (!source) return
+    source.setData({
+      type: 'FeatureCollection',
+      features: savedRoutes
+        .filter((r) => r.geojson)
+        .map((r) => ({
+          type: 'Feature' as const,
+          geometry: r.geojson!,
+          properties: { id: r.id, name: r.name },
+        })),
+    })
+    // Fit map to routes if any
+    if (savedRoutes.length > 0 && savedRoutes[0].geojson) {
+      const coords = savedRoutes.flatMap((r) => r.geojson?.coordinates ?? [])
+      if (coords.length > 0) {
+        const bounds = coords.reduce(
+          (b, c) => b.extend(c as [number, number]),
+          new mapboxgl.LngLatBounds(coords[0] as [number, number], coords[0] as [number, number])
+        )
+        map.fitBounds(bounds, { padding: 60, duration: 600 })
+      }
+    }
+  }, [savedRoutes])
+
+  // Render boat location markers (own + friends)
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    // Remove old markers
+    boatMarkersRef.current.forEach((m) => m.remove())
+    boatMarkersRef.current = []
+    // Add new markers
+    boatLocations.forEach((bl) => {
+      const el = document.createElement('div')
+      el.className = bl.is_own ? 'boat-marker boat-marker--own' : 'boat-marker'
+      el.style.transform = `rotate(${bl.heading ?? 0}deg)`
+      el.innerHTML = createBoatSVG(bl.boat_colour || '#4A5A3A')
+      // Label
+      const label = document.createElement('div')
+      label.className = 'boat-label'
+      label.textContent = bl.boat_name ?? bl.handle
+      el.appendChild(label)
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([bl.lng, bl.lat])
+        .addTo(map)
+      boatMarkersRef.current.push(marker)
+    })
+    return () => {
+      boatMarkersRef.current.forEach((m) => m.remove())
+      boatMarkersRef.current = []
+    }
+  }, [boatLocations])
 
   // Shift map centre to account for sheet coverage
   useEffect(() => {

@@ -359,6 +359,30 @@ export type CruisingLogEntry = Database['public']['Tables']['cruising_log']['Row
 export type Friendship = Database['public']['Tables']['friendships']['Row']
 export type BoatLocation = Database['public']['Tables']['boat_locations']['Row']
 
+// Boat location with joined profile — returned by get_visible_boat_locations()
+export interface BoatLocationWithProfile {
+  user_id:     string
+  handle:      string
+  boat_name:   string | null
+  boat_colour: string
+  lat:         number
+  lng:         number
+  heading:     number | null
+  updated_at:  string
+  is_own:      boolean
+}
+
+// Saved route with GeoJSON geometry — returned by get_saved_routes_geojson()
+export interface SavedRouteWithGeojson {
+  id:          string
+  name:        string
+  description: string | null
+  total_miles: number
+  total_locks: number
+  pace:        RoutePace
+  geojson:     { type: 'LineString'; coordinates: [number, number][] } | null
+}
+
 // Community post with joined author fields
 export interface CommunityPost {
   id: string

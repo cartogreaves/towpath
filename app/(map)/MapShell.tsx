@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useState, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import { MapContext, useMapContext, type FilterValue } from './MapContext'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { BottomNav } from '@/components/ui/BottomNav'
@@ -9,6 +10,9 @@ import { SearchBar } from '@/components/ui/SearchBar'
 import { FilterChips } from '@/components/ui/FilterChips'
 import { usePOIs } from '@/lib/hooks/usePOIs'
 import { useCommunityPosts } from '@/lib/hooks/useCommunityPosts'
+import { useSavedRoutes } from '@/lib/hooks/useSavedRoutes'
+import { useFriendLocations } from '@/lib/hooks/useFriendLocations'
+import { useProfile } from '@/lib/hooks/useProfile'
 import type { MapBounds } from '@/components/map/MapCanvas'
 import type { POIWithStatus, PoiType, CommunityPost } from '@/lib/types/database'
 import type { SnapPoint } from '@/components/ui/BottomSheet'
@@ -26,24 +30,41 @@ function snapToBottomPadding(snap: SnapPoint): number {
 }
 
 function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }) {
-  const { activeFilter, selectedPoi, setSelectedPoi, setSnap, snap, selectedCommunityPost, setSelectedCommunityPost } = useMapContext()
+  const pathname = usePathname()
+  const { activeFilter, selectedPoi, setSelectedPoi, setSnap, snap,
+          selectedCommunityPost, setSelectedCommunityPost } = useMapContext()
+  const { profile } = useProfile()
+
+  const isMapTab       = pathname === '/'
+  const isRoutesTab    = pathname.startsWith('/routes')
+  const isCommunityTab = pathname.startsWith('/community')
+  const isProfileTab   = pathname.startsWith('/profile')
 
   const poiTypeFilter: PoiType | null =
     activeFilter && activeFilter !== 'events' && activeFilter !== 'stoppages'
       ? (activeFilter as PoiType)
       : null
 
-  const { data: pois = [] } = usePOIs(poiTypeFilter)
-  const { data: communityPosts = [] } = useCommunityPosts()
+  // Only fetch what the active tab needs
+  const { data: allPois = [] }          = usePOIs(poiTypeFilter)
+  const { data: allCommunity = [] }     = useCommunityPosts()
+  const { data: savedRoutes = [] }      = useSavedRoutes({ enabled: isRoutesTab && !!profile?.id })
+  const { data: boatLocations = [] }    = useFriendLocations({ enabled: isProfileTab })
 
-  const pinnedPosts = communityPosts.filter((p) => p.lat != null && p.lng != null)
+  // Each tab shows its own layer; others get empty arrays
+  const pois          = isMapTab       ? allPois                                              : []
+  const communityPins = isCommunityTab ? allCommunity.filter((p) => p.lat != null)           : []
+  const routes        = isRoutesTab    ? savedRoutes                                          : []
+  const boats         = isProfileTab   ? boatLocations                                        : []
 
   return (
     <DynamicMap
       pois={pois}
       selectedPoi={selectedPoi}
-      communityPosts={pinnedPosts}
+      communityPosts={communityPins}
       selectedCommunityPost={selectedCommunityPost}
+      savedRoutes={routes}
+      boatLocations={boats}
       bottomPadding={snapToBottomPadding(snap)}
       onBoundsChange={onBoundsChange}
       onPoiClick={(poi: POIWithStatus) => {
@@ -88,7 +109,6 @@ export function MapShell({ children }: { children: React.ReactNode }) {
         <MapLayer onBoundsChange={handleBoundsChange} />
 
         <BottomSheet snap={snap} onSnapChange={setSnap} showBackdrop={snap === 'full'}>
-          {/* Persistent header — always visible at quarter */}
           <div className="px-4 pt-0.5 pb-1">
             <h1 className="font-display text-h1 text-green-800 font-bold mb-2 leading-none">
               Towpath

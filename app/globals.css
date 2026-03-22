@@ -77,6 +77,32 @@
   pointer-events: none;
 }
 
+/* Boat location markers */
+.boat-marker {
+  position: relative;
+  cursor: default;
+}
+
+.boat-marker--own svg path:first-child {
+  stroke: #4A8B6E;
+  stroke-width: 2;
+}
+
+.boat-label {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 10px;
+  font-family: var(--font-sans, sans-serif);
+  color: #2C3A2A;
+  background: rgba(255,255,255,0.85);
+  padding: 1px 4px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
 /* Dark mode — canal at dusk */
 .dark body {
   @apply bg-[#1E2620] text-[#BCC5B2];
