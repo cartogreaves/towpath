@@ -87,6 +87,9 @@ function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }
 }
 
 export function MapShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const isMapTab = pathname === '/'
+
   const [bounds, setBounds] = useState<MapBounds | null>(null)
   const [activeFilter, setActiveFilter] = useState<FilterValue>(null)
   const [selectedPoi, setSelectedPoi] = useState<InfrastructurePoint | null>(null)
@@ -148,35 +151,50 @@ export function MapShell({ children }: { children: React.ReactNode }) {
 
         <BottomSheet snap={snap} onSnapChange={setSnap} showBackdrop={snap === 'full'}>
           <div className="px-4 pt-0.5 pb-1">
-            <h1 className="font-display text-h1 text-green-800 font-bold mb-2 leading-none">
+            <h1 className="font-display text-h1 text-green-800 font-bold leading-none">
               Towpath
             </h1>
-            <div onFocus={() => { if (snap === 'quarter') setSnap('half') }}>
-              <SearchBar
-                placeholder="Search along the Towpath..."
-                onSearch={(q) => {
-                  if (q.length > 0) setSnap('half')
-                  if (q.length === 0) setSearchQuery('')
-                }}
-                onSubmit={(q) => {
-                  setSearchQuery(q)
-                  if (q.length > 0) setSnap('half')
-                }}
-                className="mb-2"
-              />
-            </div>
+            {!isMapTab && (() => {
+              const label =
+                pathname.startsWith('/routes')    ? 'Routes'    :
+                pathname.startsWith('/community') ? 'Community' :
+                pathname.startsWith('/profile')   ? 'Profile'   : null
+              return label ? (
+                <p className="font-sans text-sm font-medium text-green-400 mt-0.5 mb-1">
+                  {label}
+                </p>
+              ) : null
+            })()}
+            {isMapTab && (
+              <div className="mt-2" onFocus={() => { if (snap === 'quarter') setSnap('half') }}>
+                <SearchBar
+                  placeholder="Search along the Towpath..."
+                  onSearch={(q) => {
+                    if (q.length > 0) setSnap('half')
+                    if (q.length === 0) setSearchQuery('')
+                  }}
+                  onSubmit={(q) => {
+                    setSearchQuery(q)
+                    if (q.length > 0) setSnap('half')
+                  }}
+                  className="mb-2"
+                />
+              </div>
+            )}
           </div>
 
-          <FilterChips
-            active={activeFilter}
-            onChange={(v) => {
-              setActiveFilter(v)
-              setSelectedPoi(null)
-              setSnap('half')
-            }}
-          />
+          {isMapTab && (
+            <FilterChips
+              active={activeFilter}
+              onChange={(v) => {
+                setActiveFilter(v)
+                setSelectedPoi(null)
+                setSnap('half')
+              }}
+            />
+          )}
 
-          <div className="mt-3">
+          <div className={isMapTab ? 'mt-3' : 'mt-0'}>
             {children}
           </div>
         </BottomSheet>

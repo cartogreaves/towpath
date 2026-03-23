@@ -39,15 +39,14 @@ export default function CommunityPage() {
 
   return (
     <div className="px-4 pb-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-h1 text-green-800 font-bold">Community</h2>
-        {isLoggedIn && (
+      {isLoggedIn && (
+        <div className="flex justify-end mb-3">
           <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus size={14} />
             Post
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {showCreate && (
         <div className="mb-4">

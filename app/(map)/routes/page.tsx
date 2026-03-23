@@ -40,8 +40,7 @@ export default function RoutesPage() {
 
   return (
     <div className="px-4 pb-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-h1 text-green-800 font-bold">Routes</h2>
+      <div className="flex justify-end mb-3">
         {isLoggedIn ? (
           <Link href="/routes/new">
             <Button size="sm">
