@@ -107,3 +107,103 @@
 .dark body {
   @apply bg-[#1E2620] text-[#BCC5B2];
 }
+
+/* ── Mapbox control overrides ───────────────────────────────────────────────
+   Restyle zoom / compass / geolocate to match the Towpath design system.
+   Uses !important only where Mapbox ships inline styles or high-specificity rules.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Control group container */
+.mapboxgl-ctrl-group {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(122, 142, 102, 0.25) !important; /* green-400 @ 25% */
+  border-radius: 14px !important;
+  box-shadow: 0 2px 8px rgba(44, 58, 42, 0.10), 0 1px 2px rgba(44, 58, 42, 0.06) !important;
+  overflow: hidden;
+}
+
+/* Individual buttons */
+.mapboxgl-ctrl-group button {
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  transition: background-color 120ms ease !important;
+}
+
+.mapboxgl-ctrl-group button:hover {
+  background-color: #F3F0E8 !important; /* bg-primary oatmeal */
+}
+
+/* Remove default focus ring, use our own */
+.mapboxgl-ctrl-group button:focus-visible {
+  outline: 2px solid #4A8B6E !important; /* water-500 */
+  outline-offset: -2px !important;
+}
+.mapboxgl-ctrl-group button:focus:not(:focus-visible) {
+  box-shadow: none !important;
+}
+
+/* Divider between stacked buttons */
+.mapboxgl-ctrl-group button + button {
+  border-top: 1px solid rgba(122, 142, 102, 0.15) !important;
+}
+
+/* Icons — tint to green-700 (#3A4830) */
+/* filter generated from black → #3A4830 */
+.mapboxgl-ctrl-zoom-in .mapboxgl-ctrl-icon,
+.mapboxgl-ctrl-zoom-out .mapboxgl-ctrl-icon {
+  filter: brightness(0) saturate(100%)
+          invert(21%) sepia(13%) saturate(650%) hue-rotate(62deg)
+          brightness(96%) contrast(88%);
+}
+
+/* Compass: keep the red/white needle (universal convention) but tint the
+   outer ring to match our green */
+.mapboxgl-ctrl-compass .mapboxgl-ctrl-icon {
+  filter: hue-rotate(160deg) saturate(60%) brightness(75%);
+}
+
+/* Geolocate — default state: green-700 */
+.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
+  filter: brightness(0) saturate(100%)
+          invert(21%) sepia(13%) saturate(650%) hue-rotate(62deg)
+          brightness(96%) contrast(88%);
+}
+
+/* Geolocate — active/tracking state: water-500 (#4A8B6E) */
+.mapboxgl-ctrl-geolocate-active .mapboxgl-ctrl-icon,
+.mapboxgl-ctrl-geolocate-background-error .mapboxgl-ctrl-icon {
+  filter: brightness(0) saturate(100%)
+          invert(44%) sepia(28%) saturate(560%) hue-rotate(114deg)
+          brightness(90%) contrast(86%);
+}
+
+/* Attribution pill */
+.mapboxgl-ctrl-attrib {
+  background: rgba(243, 240, 232, 0.88) !important;
+  border-radius: 8px !important;
+  font-family: var(--font-karla, sans-serif) !important;
+  font-size: 10px !important;
+  color: #7A8E66 !important; /* green-400 */
+}
+
+.mapboxgl-ctrl-attrib a,
+.mapboxgl-ctrl-attrib button {
+  color: #4A8B6E !important; /* water-500 */
+}
+
+.mapboxgl-ctrl-attrib.mapboxgl-compact .mapboxgl-ctrl-attrib-button {
+  background-color: rgba(243, 240, 232, 0.9) !important;
+  border-radius: 50% !important;
+}
+
+/* Mapbox logo — desaturate to fit oatmeal palette */
+.mapboxgl-ctrl-logo {
+  filter: saturate(0%) brightness(60%) !important;
+  opacity: 0.5 !important;
+}
