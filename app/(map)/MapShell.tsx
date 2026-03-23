@@ -1,22 +1,25 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { MapContext, useMapContext, type FilterValue } from './MapContext'
+import { MapContext, useMapContext, type FilterValue, type NavigationBounds } from './MapContext'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { BottomNav } from '@/components/ui/BottomNav'
 import { SearchBar } from '@/components/ui/SearchBar'
 import { FilterChips } from '@/components/ui/FilterChips'
+import { NavigationSelector } from '@/components/ui/NavigationSelector'
 import { useCommunityPosts } from '@/lib/hooks/useCommunityPosts'
 import { useSavedRoutes } from '@/lib/hooks/useSavedRoutes'
 import { useFriendLocations } from '@/lib/hooks/useFriendLocations'
 import { useProfile } from '@/lib/hooks/useProfile'
 import { useCanalNetwork } from '@/lib/hooks/useCanalNetwork'
 import { useCanalInfrastructure } from '@/lib/hooks/useCanalInfrastructure'
+import { useNavigations } from '@/lib/hooks/useNavigations'
 import type { MapBounds } from '@/components/map/MapCanvas'
 import type { CommunityPost } from '@/lib/types/database'
 import type { InfrastructurePoint } from '@/lib/hooks/useCanalInfrastructure'
+import type { Navigation } from '@/lib/hooks/useNavigations'
 import type { SnapPoint } from '@/components/ui/BottomSheet'
 
 const DynamicMap = dynamic(
@@ -34,7 +37,8 @@ function snapToBottomPadding(snap: SnapPoint): number {
 function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }) {
   const pathname = usePathname()
   const { activeFilter, selectedPoi, setSelectedPoi, setSnap, snap,
-          selectedCommunityPost, setSelectedCommunityPost } = useMapContext()
+          selectedCommunityPost, setSelectedCommunityPost,
+          navigationBounds } = useMapContext()
   const { profile } = useProfile()
 
   const isMapTab       = pathname === '/'
@@ -44,26 +48,22 @@ function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }
 
   const infraTypeFilter: string | null = activeFilter ?? null
 
-  // Canal network is always visible (permanent base data)
   const { data: canalSegments = [] } = useCanalNetwork()
-
-  // Infrastructure replaces POIs on the map tab
-  const { data: allInfra = [] } = useCanalInfrastructure(isMapTab ? infraTypeFilter : null)
-
+  const { data: allInfra = [] }      = useCanalInfrastructure(isMapTab ? infraTypeFilter : null)
   const { data: allCommunity = [] }  = useCommunityPosts()
   const { data: savedRoutes = [] }   = useSavedRoutes({ enabled: isRoutesTab && !!profile?.id })
   const { data: boatLocations = [] } = useFriendLocations({ enabled: isProfileTab })
 
-  // Each tab shows its own overlay; others get empty arrays
-  const infrastructure = isMapTab       ? allInfra                                           : []
-  const communityPins  = isCommunityTab ? allCommunity.filter((p) => p.lat != null)          : []
-  const routes         = isRoutesTab    ? savedRoutes                                         : []
-  const boats          = isProfileTab   ? boatLocations                                       : []
+  const infrastructure = isMapTab       ? allInfra                                  : []
+  const communityPins  = isCommunityTab ? allCommunity.filter(p => p.lat != null)   : []
+  const routes         = isRoutesTab    ? savedRoutes                                : []
+  const boats          = isProfileTab   ? boatLocations                              : []
 
   return (
     <DynamicMap
       canalSegments={canalSegments}
       infrastructure={infrastructure}
+      navigationBounds={navigationBounds}
       selectedPoi={selectedPoi}
       communityPosts={communityPins}
       selectedCommunityPost={selectedCommunityPost}
@@ -90,8 +90,29 @@ export function MapShell({ children }: { children: React.ReactNode }) {
   const [selectedCommunityPost, setSelectedCommunityPost] = useState<CommunityPost | null>(null)
   const [snap, setSnap] = useState<SnapPoint>('quarter')
   const [searchQuery, setSearchQuery] = useState('')
+  const [navigationBounds, setNavigationBounds] = useState<NavigationBounds | null>(null)
+  const [selectedNavId, setSelectedNavId] = useState<number | null>(null)
+
+  const { profile } = useProfile()
+  const { data: navigations = [] } = useNavigations()
+  const defaultApplied = useRef(false)
+
+  // Auto-fly to default navigation once on first load
+  useEffect(() => {
+    if (defaultApplied.current || !profile?.default_navigation_id || navigations.length === 0) return
+    const nav = navigations.find(n => n.id === profile.default_navigation_id)
+    if (!nav) return
+    defaultApplied.current = true
+    setSelectedNavId(nav.id)
+    setNavigationBounds({ minLng: Number(nav.min_lng), minLat: Number(nav.min_lat), maxLng: Number(nav.max_lng), maxLat: Number(nav.max_lat) })
+  }, [profile, navigations])
 
   const handleBoundsChange = useCallback((b: MapBounds) => setBounds(b), [])
+
+  function handleNavSelect(nav: Navigation) {
+    setSelectedNavId(nav.id)
+    setNavigationBounds({ minLng: Number(nav.min_lng), minLat: Number(nav.min_lat), maxLng: Number(nav.max_lng), maxLat: Number(nav.max_lat) })
+  }
 
   return (
     <MapContext.Provider
@@ -107,10 +128,20 @@ export function MapShell({ children }: { children: React.ReactNode }) {
         setSnap,
         searchQuery,
         setSearchQuery,
+        navigationBounds,
+        setNavigationBounds,
       }}
     >
       <main className="relative w-full h-screen overflow-hidden bg-bg-primary">
         <MapLayer onBoundsChange={handleBoundsChange} />
+
+        {/* Navigation selector — top-left map overlay */}
+        <div className="absolute top-4 left-4 z-20 pt-safe">
+          <NavigationSelector
+            selectedId={selectedNavId}
+            onSelect={handleNavSelect}
+          />
+        </div>
 
         <BottomSheet snap={snap} onSnapChange={setSnap} showBackdrop={snap === 'full'}>
           <div className="px-4 pt-0.5 pb-1">

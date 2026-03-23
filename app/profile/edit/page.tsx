@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
 import type { Profile, BoatType } from '@/lib/types/database'
 import { ChevronLeft } from 'lucide-react'
+import { useNavigations } from '@/lib/hooks/useNavigations'
 
 const BOAT_TYPES: { value: BoatType; label: string }[] = [
   { value: 'narrowboat', label: 'Narrowboat' },
@@ -38,7 +39,9 @@ export default function EditProfilePage() {
     bio: '',
     whatsapp_number: '',
     whatsapp_enabled: false,
+    default_navigation_id: null as number | null,
   })
+  const { data: navigations = [] } = useNavigations()
 
   useEffect(() => {
     const supabase = createClient()
@@ -57,6 +60,7 @@ export default function EditProfilePage() {
               bio: data.bio ?? '',
               whatsapp_number: data.whatsapp_number ?? '',
               whatsapp_enabled: data.whatsapp_enabled,
+              default_navigation_id: (data as Profile & { default_navigation_id?: number | null }).default_navigation_id ?? null,
             })
           }
         })
@@ -79,6 +83,7 @@ export default function EditProfilePage() {
       bio: form.bio || null,
       whatsapp_number: form.whatsapp_enabled ? form.whatsapp_number : null,
       whatsapp_enabled: form.whatsapp_enabled,
+      default_navigation_id: form.default_navigation_id,
     }).eq('id', user.id)
 
     setSaving(false)
@@ -175,6 +180,26 @@ export default function EditProfilePage() {
             <p className="text-sm text-green-400">No fixed mooring — moves regularly</p>
           </div>
         </label>
+
+        {/* Default waterway */}
+        <div>
+          <label className="text-label text-green-600 font-medium block mb-1.5">Home waterway</label>
+          <p className="text-sm text-green-400 mb-2">The app will fly here when you open the map</p>
+          <select
+            value={form.default_navigation_id ?? ''}
+            onChange={e => setForm(f => ({ ...f, default_navigation_id: e.target.value ? Number(e.target.value) : null }))}
+            className="
+              w-full h-11 px-3 bg-bg-surface border border-green-200 rounded-md
+              text-green-700 font-sans text-body
+              focus:outline-none focus:border-water-500 focus:ring-[3px] focus:ring-water-500/15
+            "
+          >
+            <option value="">None — start at default view</option>
+            {navigations.map(nav => (
+              <option key={nav.id} value={nav.id}>{nav.name}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Bio */}
         <div>

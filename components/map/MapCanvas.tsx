@@ -5,6 +5,7 @@ import mapboxgl from 'mapbox-gl'
 import type { CommunityPost, BoatLocationWithProfile, SavedRouteWithGeojson } from '@/lib/types/database'
 import type { CanalSegment } from '@/lib/hooks/useCanalNetwork'
 import type { InfrastructurePoint } from '@/lib/hooks/useCanalInfrastructure'
+import type { NavigationBounds } from '@/app/(map)/MapContext'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -43,6 +44,7 @@ interface MapCanvasProps {
   boatLocations?: BoatLocationWithProfile[]
   canalSegments?: CanalSegment[]
   infrastructure?: InfrastructurePoint[]
+  navigationBounds?: NavigationBounds | null
   bottomPadding?: number
   isDark?: boolean
   onBoundsChange?: (bounds: MapBounds) => void
@@ -66,6 +68,7 @@ export function MapCanvas({
   boatLocations = [],
   canalSegments = [],
   infrastructure = [],
+  navigationBounds = null,
   bottomPadding = 0,
   isDark = false,
   onBoundsChange,
@@ -421,6 +424,16 @@ export function MapCanvas({
       boatMarkersRef.current = []
     }
   }, [boatLocations])
+
+  // Fly to a selected navigation's bounding box
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !navigationBounds) return
+    map.fitBounds(
+      [[navigationBounds.minLng, navigationBounds.minLat], [navigationBounds.maxLng, navigationBounds.maxLat]],
+      { padding: { top: 80, bottom: bottomPadding + 60, left: 24, right: 24 }, duration: 800, essential: true }
+    )
+  }, [navigationBounds]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Shift map centre to account for sheet coverage
   useEffect(() => {

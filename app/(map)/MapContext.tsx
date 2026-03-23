@@ -8,6 +8,10 @@ import type { SnapPoint } from '@/components/ui/BottomSheet'
 
 export type FilterValue = 'lock' | 'winding_hole' | 'bridge' | 'aqueduct' | 'tunnel_portal' | 'weir' | null
 
+export interface NavigationBounds {
+  minLng: number; minLat: number; maxLng: number; maxLat: number
+}
+
 export interface MapContextValue {
   bounds: MapBounds | null
   activeFilter: FilterValue
@@ -20,6 +24,8 @@ export interface MapContextValue {
   setSnap: (s: SnapPoint) => void
   searchQuery: string
   setSearchQuery: (q: string) => void
+  navigationBounds: NavigationBounds | null
+  setNavigationBounds: (b: NavigationBounds | null) => void
 }
 
 export const MapContext = createContext<MapContextValue>({
@@ -34,6 +40,8 @@ export const MapContext = createContext<MapContextValue>({
   setSnap: () => {},
   searchQuery: '',
   setSearchQuery: () => {},
+  navigationBounds: null,
+  setNavigationBounds: () => {},
 })
 
 export function useMapContext() {

@@ -15,6 +15,20 @@ export type RoutePace = 'relaxed' | 'steady' | 'pushing'
 export interface Database {
   public: {
     Tables: {
+      navigations: {
+        Row: {
+          id: number
+          name: string
+          min_lng: number
+          min_lat: number
+          max_lng: number
+          max_lat: number
+          center_lng: number
+          center_lat: number
+        }
+        Insert: never
+        Update: never
+      }
       profiles: {
         Row: {
           id: string
@@ -30,10 +44,11 @@ export interface Database {
           trust_score: number
           total_miles: number
           total_locks: number
+          default_navigation_id: number | null
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'>
+        Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at' | 'trust_score' | 'total_miles' | 'total_locks'>
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
       }
       boat_locations: {
