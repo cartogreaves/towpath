@@ -39,7 +39,7 @@ function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }
   const pathname = usePathname()
   const { activeFilter, selectedPoi, setSelectedPoi, setSnap, snap,
           selectedCommunityPost, setSelectedCommunityPost,
-          navigationBounds, searchQuery } = useMapContext()
+          navigationBounds, searchQuery, hiddenInfraTypes } = useMapContext()
   const { profile } = useProfile()
 
   const isMapTab       = pathname === '/'
@@ -57,7 +57,8 @@ function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }
   const { data: savedRoutes = [] }   = useSavedRoutes({ enabled: isRoutesTab && !!profile?.id })
   const { data: boatLocations = [] } = useFriendLocations({ enabled: isProfileTab })
 
-  const infrastructure = isMapTab ? (isSearching ? searchResults : allInfra) : []
+  const rawInfra = isMapTab ? (isSearching ? searchResults : allInfra) : []
+  const infrastructure = rawInfra.filter(p => !hiddenInfraTypes.has(p.type))
   const communityPins  = isCommunityTab ? allCommunity.filter(p => p.lat != null)   : []
   const routes         = isRoutesTab    ? savedRoutes                                : []
   const boats          = isProfileTab   ? boatLocations                              : []
@@ -92,6 +93,14 @@ export function MapShell({ children }: { children: React.ReactNode }) {
 
   const [bounds, setBounds] = useState<MapBounds | null>(null)
   const [activeFilter, setActiveFilter] = useState<FilterValue>(null)
+  const [hiddenInfraTypes, setHiddenInfraTypes] = useState<Set<string>>(new Set())
+  function toggleInfraType(type: string) {
+    setHiddenInfraTypes(prev => {
+      const next = new Set(prev)
+      next.has(type) ? next.delete(type) : next.add(type)
+      return next
+    })
+  }
   const [selectedPoi, setSelectedPoi] = useState<InfrastructurePoint | null>(null)
   const [selectedCommunityPost, setSelectedCommunityPost] = useState<CommunityPost | null>(null)
   const [snap, setSnap] = useState<SnapPoint>('quarter')
@@ -126,6 +135,8 @@ export function MapShell({ children }: { children: React.ReactNode }) {
         bounds,
         activeFilter,
         setActiveFilter,
+        hiddenInfraTypes,
+        toggleInfraType,
         selectedPoi,
         setSelectedPoi,
         selectedCommunityPost,
@@ -191,6 +202,8 @@ export function MapShell({ children }: { children: React.ReactNode }) {
                 setSelectedPoi(null)
                 setSnap('half')
               }}
+              hiddenTypes={hiddenInfraTypes}
+              onToggleType={toggleInfraType}
             />
           )}
 

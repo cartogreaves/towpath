@@ -77,7 +77,7 @@ function InfraCard({ point }: { point: InfrastructurePoint }) {
 }
 
 export default function MapHomePage() {
-  const { activeFilter, selectedPoi, setSelectedPoi, setSnap, searchQuery, setSearchQuery, setNavigationBounds } = useMapContext()
+  const { activeFilter, selectedPoi, setSelectedPoi, setSnap, searchQuery, setSearchQuery, setNavigationBounds, hiddenInfraTypes } = useMapContext()
 
   useEffect(() => { setSnap('quarter') }, [setSnap])
 
@@ -87,20 +87,20 @@ export default function MapHomePage() {
   const { data: viewportPoints = [] } = useCanalInfrastructure(isSearching ? null : typeFilter)
   const { data: searchResults = [], isFetching: searchFetching } = useInfrastructureSearch(searchQuery)
 
-  const points = isSearching ? searchResults : viewportPoints
+  const points = (isSearching ? searchResults : viewportPoints).filter(p => !hiddenInfraTypes.has(p.type))
 
-  // Fit map to all search results when they arrive
+  // Fit map to visible search results when they arrive
   useEffect(() => {
-    if (!isSearching || searchResults.length === 0) return
-    const lngs = searchResults.map(p => p.lng)
-    const lats = searchResults.map(p => p.lat)
+    if (!isSearching || points.length === 0) return
+    const lngs = points.map(p => p.lng)
+    const lats = points.map(p => p.lat)
     setNavigationBounds({
       minLng: Math.min(...lngs),
       minLat: Math.min(...lats),
       maxLng: Math.max(...lngs),
       maxLat: Math.max(...lats),
     })
-  }, [searchResults, isSearching, setNavigationBounds])
+  }, [points, isSearching, setNavigationBounds])
 
   return (
     <div className="px-4 pb-4 space-y-3">
@@ -120,7 +120,7 @@ export default function MapHomePage() {
             <p className="text-sm text-green-400 font-medium">
               {searchFetching
                 ? 'Searching…'
-                : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${searchQuery}"`
+                : `${points.length} result${points.length !== 1 ? 's' : ''} for "${searchQuery}"`
               }
             </p>
             <button
