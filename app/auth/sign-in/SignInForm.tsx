@@ -43,10 +43,10 @@ export function SignInForm() {
     <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
+          <p className="text-body text-green-400 mt-1">Along the...</p>
           <Link href="/">
             <h1 className="font-display text-display text-green-800 font-bold">Towpath</h1>
           </Link>
-          <p className="text-body text-green-400 mt-1">Life along the cut</p>
         </div>
 
         <div className="bg-bg-surface rounded-xl border border-green-100 p-6 shadow-card">

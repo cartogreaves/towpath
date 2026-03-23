@@ -15,6 +15,7 @@ import { useFriendLocations } from '@/lib/hooks/useFriendLocations'
 import { useProfile } from '@/lib/hooks/useProfile'
 import { useCanalNetwork } from '@/lib/hooks/useCanalNetwork'
 import { useCanalInfrastructure } from '@/lib/hooks/useCanalInfrastructure'
+import { useInfrastructureSearch } from '@/lib/hooks/useInfrastructureSearch'
 import { useNavigations } from '@/lib/hooks/useNavigations'
 import type { MapBounds } from '@/components/map/MapCanvas'
 import type { CommunityPost } from '@/lib/types/database'
@@ -38,7 +39,7 @@ function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }
   const pathname = usePathname()
   const { activeFilter, selectedPoi, setSelectedPoi, setSnap, snap,
           selectedCommunityPost, setSelectedCommunityPost,
-          navigationBounds } = useMapContext()
+          navigationBounds, searchQuery } = useMapContext()
   const { profile } = useProfile()
 
   const isMapTab       = pathname === '/'
@@ -46,15 +47,17 @@ function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }
   const isCommunityTab = pathname.startsWith('/community')
   const isProfileTab   = pathname.startsWith('/profile')
 
+  const isSearching     = isMapTab && searchQuery.trim().length >= 2
   const infraTypeFilter: string | null = activeFilter ?? null
 
   const { data: canalSegments = [] } = useCanalNetwork()
-  const { data: allInfra = [] }      = useCanalInfrastructure(isMapTab ? infraTypeFilter : null)
+  const { data: allInfra = [] }      = useCanalInfrastructure(isMapTab && !isSearching ? infraTypeFilter : null)
+  const { data: searchResults = [] } = useInfrastructureSearch(isSearching ? searchQuery : '')
   const { data: allCommunity = [] }  = useCommunityPosts()
   const { data: savedRoutes = [] }   = useSavedRoutes({ enabled: isRoutesTab && !!profile?.id })
   const { data: boatLocations = [] } = useFriendLocations({ enabled: isProfileTab })
 
-  const infrastructure = isMapTab       ? allInfra                                  : []
+  const infrastructure = isMapTab ? (isSearching ? searchResults : allInfra) : []
   const communityPins  = isCommunityTab ? allCommunity.filter(p => p.lat != null)   : []
   const routes         = isRoutesTab    ? savedRoutes                                : []
   const boats          = isProfileTab   ? boatLocations                              : []
@@ -152,6 +155,10 @@ export function MapShell({ children }: { children: React.ReactNode }) {
               <SearchBar
                 placeholder="Search along the Towpath..."
                 onSearch={(q) => {
+                  if (q.length > 0) setSnap('half')
+                  if (q.length === 0) setSearchQuery('')
+                }}
+                onSubmit={(q) => {
                   setSearchQuery(q)
                   if (q.length > 0) setSnap('half')
                 }}

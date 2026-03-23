@@ -2,9 +2,10 @@
 
 import { useEffect } from 'react'
 import { AnimatePresence, motion, type Variants, type Easing } from 'framer-motion'
-import { BetweenVerticalStart, RotateCcw, Waves, ArrowLeftRight, Milestone, AlertTriangle, Navigation } from 'lucide-react'
+import { BetweenVerticalStart, RotateCcw, Waves, ArrowLeftRight, Milestone, AlertTriangle, Navigation, X } from 'lucide-react'
 import { useMapContext } from './MapContext'
 import { useCanalInfrastructure } from '@/lib/hooks/useCanalInfrastructure'
+import { useInfrastructureSearch } from '@/lib/hooks/useInfrastructureSearch'
 import type { InfrastructurePoint } from '@/lib/hooks/useCanalInfrastructure'
 import type { FilterValue } from './MapContext'
 
@@ -76,12 +77,30 @@ function InfraCard({ point }: { point: InfrastructurePoint }) {
 }
 
 export default function MapHomePage() {
-  const { activeFilter, selectedPoi, setSelectedPoi, setSnap } = useMapContext()
+  const { activeFilter, selectedPoi, setSelectedPoi, setSnap, searchQuery, setSearchQuery, setNavigationBounds } = useMapContext()
 
   useEffect(() => { setSnap('quarter') }, [setSnap])
 
+  const isSearching = searchQuery.trim().length >= 2
   const typeFilter = activeFilter as FilterValue
-  const { data: points = [] } = useCanalInfrastructure(typeFilter)
+
+  const { data: viewportPoints = [] } = useCanalInfrastructure(isSearching ? null : typeFilter)
+  const { data: searchResults = [], isFetching: searchFetching } = useInfrastructureSearch(searchQuery)
+
+  const points = isSearching ? searchResults : viewportPoints
+
+  // Fit map to all search results when they arrive
+  useEffect(() => {
+    if (!isSearching || searchResults.length === 0) return
+    const lngs = searchResults.map(p => p.lng)
+    const lats = searchResults.map(p => p.lat)
+    setNavigationBounds({
+      minLng: Math.min(...lngs),
+      minLat: Math.min(...lats),
+      maxLng: Math.max(...lngs),
+      maxLat: Math.max(...lats),
+    })
+  }, [searchResults, isSearching, setNavigationBounds])
 
   return (
     <div className="px-4 pb-4 space-y-3">
@@ -94,6 +113,45 @@ export default function MapHomePage() {
             ← Back to list
           </button>
           <InfraCard point={selectedPoi} />
+        </>
+      ) : isSearching ? (
+        <>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-green-400 font-medium">
+              {searchFetching
+                ? 'Searching…'
+                : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${searchQuery}"`
+              }
+            </p>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="flex items-center gap-1 text-sm text-green-400 hover:text-green-600"
+            >
+              <X size={13} /> Clear
+            </button>
+          </div>
+          {!searchFetching && searchResults.length === 0 && (
+            <div className="text-center py-8">
+              <p className="font-display text-h2 text-green-800 mb-2">No results found</p>
+              <p className="text-body text-green-400">Try a different name or waterway</p>
+            </div>
+          )}
+          <AnimatePresence initial={false} mode="popLayout">
+            {points.slice(0, 100).map((pt) => (
+              <motion.button
+                key={pt.id}
+                className="w-full text-left"
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                layout
+                onClick={() => { setSelectedPoi(pt); setSnap('half') }}
+              >
+                <InfraCard point={pt} />
+              </motion.button>
+            ))}
+          </AnimatePresence>
         </>
       ) : points.length > 0 ? (
         <>

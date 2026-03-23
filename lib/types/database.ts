@@ -196,6 +196,10 @@ export interface Database {
         }
         Returns: void
       }
+      search_infrastructure: {
+        Args: { p_query: string }
+        Returns: { id: number; sap_description: string; type: string; waterway_name: string; lng: number; lat: number }[]
+      }
       canal_network_in_bbox: {
         Args: { p_lng1: number; p_lat1: number; p_lng2: number; p_lat2: number }
         Returns: { id: number; name: string; sapnavstatus: string; geojson: string }[]

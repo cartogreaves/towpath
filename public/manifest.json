@@ -1,7 +1,7 @@
 {
   "name": "Towpath",
   "short_name": "Towpath",
-  "description": "Life along the cut — canal network navigation and community",
+  "description": "Navigate along the towpath together. Join the community.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F3F0E8",

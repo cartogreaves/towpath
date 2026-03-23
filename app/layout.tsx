@@ -3,7 +3,7 @@ import './globals.css'
 import { QueryProvider } from '@/lib/providers/QueryProvider'
 
 export const metadata: Metadata = {
-  title: 'Towpath — Life along the cut',
+  title: 'Towpath',
   description: 'A map-centric social network for continuous cruisers of the UK canal network.',
   manifest: '/manifest.json',
   appleWebApp: {
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Towpath',
-    description: 'Navigate together. Life along the cut.',
+    description: 'Navigate along the towpath together. Join the community.',
     type: 'website',
     locale: 'en_GB',
   },
