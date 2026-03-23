@@ -91,16 +91,18 @@ export default function MapHomePage() {
 
   // Fit map to visible search results when they arrive
   useEffect(() => {
-    if (!isSearching || points.length === 0) return
-    const lngs = points.map(p => p.lng)
-    const lats = points.map(p => p.lat)
+    if (!isSearching || searchResults.length === 0) return
+    const visible = searchResults.filter(p => !hiddenInfraTypes.has(p.type))
+    if (visible.length === 0) return
+    const lngs = visible.map(p => p.lng)
+    const lats = visible.map(p => p.lat)
     setNavigationBounds({
       minLng: Math.min(...lngs),
       minLat: Math.min(...lats),
       maxLng: Math.max(...lngs),
       maxLat: Math.max(...lats),
     })
-  }, [points, isSearching, setNavigationBounds])
+  }, [searchResults, isSearching, hiddenInfraTypes, setNavigationBounds])
 
   return (
     <div className="px-4 pb-4 space-y-3">
