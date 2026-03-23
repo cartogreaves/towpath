@@ -2,17 +2,18 @@
 
 import { createContext, useContext } from 'react'
 import type { MapBounds } from '@/components/map/MapCanvas'
-import type { POIWithStatus, PoiType, CommunityPost } from '@/lib/types/database'
+import type { InfrastructurePoint } from '@/lib/hooks/useCanalInfrastructure'
+import type { CommunityPost } from '@/lib/types/database'
 import type { SnapPoint } from '@/components/ui/BottomSheet'
 
-export type FilterValue = PoiType | 'events' | 'stoppages' | null
+export type FilterValue = 'lock' | 'winding_hole' | 'bridge' | 'aqueduct' | 'tunnel_portal' | 'weir' | null
 
 export interface MapContextValue {
   bounds: MapBounds | null
   activeFilter: FilterValue
   setActiveFilter: (f: FilterValue) => void
-  selectedPoi: POIWithStatus | null
-  setSelectedPoi: (p: POIWithStatus | null) => void
+  selectedPoi: InfrastructurePoint | null
+  setSelectedPoi: (p: InfrastructurePoint | null) => void
   selectedCommunityPost: CommunityPost | null
   setSelectedCommunityPost: (p: CommunityPost | null) => void
   snap: SnapPoint

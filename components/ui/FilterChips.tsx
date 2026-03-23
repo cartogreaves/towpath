@@ -1,12 +1,9 @@
 'use client'
 
 import {
-  Droplets, Anchor, BetweenVerticalStart, Wrench,
-  Beer, Calendar, AlertTriangle, Fuel
+  BetweenVerticalStart, RotateCcw, Waves, ArrowLeftRight, Milestone, AlertTriangle
 } from 'lucide-react'
-import type { PoiType } from '@/lib/types/database'
-
-type FilterValue = PoiType | 'events' | 'stoppages' | null
+import type { FilterValue } from '@/app/(map)/MapContext'
 
 interface Chip {
   value: FilterValue
@@ -15,13 +12,12 @@ interface Chip {
 }
 
 const chips: Chip[] = [
-  { value: 'water_point', label: 'Water', icon: <Droplets size={14} /> },
-  { value: 'mooring', label: 'Moorings', icon: <Anchor size={14} /> },
-  { value: 'lock', label: 'Locks', icon: <BetweenVerticalStart size={14} /> },
-  { value: 'fuel', label: 'Fuel', icon: <Fuel size={14} /> },
-  { value: 'pub', label: 'Pubs', icon: <Beer size={14} /> },
-  { value: 'events', label: 'Events', icon: <Calendar size={14} /> },
-  { value: 'stoppages', label: 'Stoppages', icon: <AlertTriangle size={14} /> },
+  { value: 'lock',          label: 'Locks',        icon: <BetweenVerticalStart size={14} /> },
+  { value: 'winding_hole',  label: 'Winding holes', icon: <RotateCcw size={14} /> },
+  { value: 'bridge',        label: 'Bridges',       icon: <ArrowLeftRight size={14} /> },
+  { value: 'aqueduct',      label: 'Aqueducts',     icon: <Waves size={14} /> },
+  { value: 'tunnel_portal', label: 'Tunnels',       icon: <Milestone size={14} /> },
+  { value: 'weir',          label: 'Weirs',         icon: <AlertTriangle size={14} /> },
 ]
 
 interface FilterChipsProps {

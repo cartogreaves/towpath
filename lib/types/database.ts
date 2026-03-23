@@ -6,95 +6,15 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type PoiType =
-  | 'water_point'
-  | 'mooring'
-  | 'lock'
-  | 'winding_hole'
-  | 'waste_services'
-  | 'pump_out'
-  | 'pub'
-  | 'shop'
-  | 'boatyard'
-  | 'fuel'
-  | 'launderette'
-  | 'post_office'
-
-export type ServiceStatus = 'working' | 'issue_reported' | 'closed' | 'unknown'
 export type PostType = 'ask' | 'offer'
 export type PostVisibility = 'public' | 'friends'
 export type BoatType = 'narrowboat' | 'widebeam' | 'cruiser' | 'dutch_barge' | 'tug' | 'butty' | 'other'
 export type FriendshipStatus = 'pending' | 'accepted'
-export type StoppageType = 'closure' | 'restriction' | 'maintenance' | 'emergency'
 export type RoutePace = 'relaxed' | 'steady' | 'pushing'
 
 export interface Database {
   public: {
     Tables: {
-      canals: {
-        Row: {
-          id: string
-          name: string
-          alternate_names: string[] | null
-          geometry: unknown
-          length_mi: number | null
-          navigation_authority: string | null
-          created_at: string
-        }
-        Insert: Omit<Database['public']['Tables']['canals']['Row'], 'id' | 'created_at'>
-        Update: Partial<Database['public']['Tables']['canals']['Insert']>
-      }
-      pois: {
-        Row: {
-          id: string
-          name: string
-          type: PoiType
-          location: unknown
-          canal_id: string | null
-          mile_marker: number | null
-          metadata: Json
-          osm_id: number | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: Omit<Database['public']['Tables']['pois']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['pois']['Insert']>
-      }
-      locks: {
-        Row: {
-          id: string
-          poi_id: string
-          rise_ft: number | null
-          width_ft: number | null
-          length_ft: number | null
-          type: 'narrow' | 'wide' | 'broad' | null
-          paired: boolean
-          staircase: number
-          notes: string | null
-        }
-        Insert: Omit<Database['public']['Tables']['locks']['Row'], 'id'>
-        Update: Partial<Database['public']['Tables']['locks']['Insert']>
-      }
-      stoppages: {
-        Row: {
-          id: string
-          canal_id: string | null
-          title: string
-          description: string | null
-          type: StoppageType
-          start_point: unknown | null
-          end_point: unknown | null
-          affected_geometry: unknown | null
-          starts_at: string | null
-          ends_at: string | null
-          source_url: string | null
-          is_active: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: Omit<Database['public']['Tables']['stoppages']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['stoppages']['Insert']>
-      }
       profiles: {
         Row: {
           id: string
@@ -138,29 +58,6 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['friendships']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['friendships']['Insert']>
-      }
-      status_reports: {
-        Row: {
-          id: string
-          poi_id: string
-          user_id: string
-          status: ServiceStatus
-          comment: string | null
-          photos: string[] | null
-          confirmation_count: number
-          created_at: string
-        }
-        Insert: Omit<Database['public']['Tables']['status_reports']['Row'], 'id' | 'created_at' | 'confirmation_count'>
-        Update: Partial<Database['public']['Tables']['status_reports']['Insert']>
-      }
-      report_confirmations: {
-        Row: {
-          report_id: string
-          user_id: string
-          created_at: string
-        }
-        Insert: Omit<Database['public']['Tables']['report_confirmations']['Row'], 'created_at'>
-        Update: never
       }
       events: {
         Row: {
@@ -275,53 +172,6 @@ export interface Database {
       }
     }
     Functions: {
-      pois_in_bbox: {
-        Args: {
-          p_lng1: number
-          p_lat1: number
-          p_lng2: number
-          p_lat2: number
-          p_type?: PoiType
-        }
-        Returns: {
-          id: string
-          name: string
-          type: PoiType
-          lng: number
-          lat: number
-          canal_id: string | null
-          mile_marker: number | null
-          metadata: Json
-          current_status: ServiceStatus | null
-          report_count: number
-          latest_report: string | null
-        }[]
-      }
-      nearest_pois: {
-        Args: {
-          p_lng: number
-          p_lat: number
-          p_type?: PoiType
-          p_limit?: number
-        }
-        Returns: {
-          id: string
-          name: string
-          type: PoiType
-          lng: number
-          lat: number
-          distance_m: number
-          current_status: ServiceStatus | null
-        }[]
-      }
-      confirm_report: {
-        Args: { p_report_id: string }
-        Returns: void
-      }
-      get_poi_status: {
-        Args: { p_poi_id: string }
-        Returns: { status: ServiceStatus; report_count: number; latest: string }[]
-      }
       update_boat_location: {
         Args: {
           p_lat: number
@@ -331,13 +181,21 @@ export interface Database {
         }
         Returns: void
       }
+      canal_network_in_bbox: {
+        Args: { p_lng1: number; p_lat1: number; p_lng2: number; p_lat2: number }
+        Returns: { id: number; name: string; sapnavstatus: string; geojson: string }[]
+      }
+      infrastructure_in_bbox: {
+        Args: {
+          p_lng1: number; p_lat1: number; p_lng2: number; p_lat2: number
+          p_type?: string
+        }
+        Returns: { id: number; sap_description: string; type: string; waterway_name: string; lng: number; lat: number }[]
+      }
     }
     Enums: {
-      poi_type: PoiType
-      service_status: ServiceStatus
       boat_type: BoatType
       friendship_status: FriendshipStatus
-      stoppage_type: StoppageType
       route_pace: RoutePace
       post_type: PostType
       post_visibility: PostVisibility
@@ -347,11 +205,6 @@ export interface Database {
 
 // Convenience type aliases
 export type Profile = Database['public']['Tables']['profiles']['Row']
-export type POI = Database['public']['Tables']['pois']['Row']
-export type Canal = Database['public']['Tables']['canals']['Row']
-export type Lock = Database['public']['Tables']['locks']['Row']
-export type Stoppage = Database['public']['Tables']['stoppages']['Row']
-export type StatusReport = Database['public']['Tables']['status_reports']['Row']
 export type Event = Database['public']['Tables']['events']['Row']
 export type SavedRoute = Database['public']['Tables']['saved_routes']['Row']
 export type MooringTimer = Database['public']['Tables']['mooring_timers']['Row']
@@ -400,18 +253,4 @@ export interface CommunityPost {
   is_resolved: boolean
   created_at: string
   expires_at: string | null
-}
-
-export type POIWithStatus = {
-  id: string
-  name: string
-  type: PoiType
-  lng: number
-  lat: number
-  canal_id: string | null
-  mile_marker: number | null
-  metadata: Json
-  current_status: ServiceStatus | null
-  report_count: number
-  latest_report: string | null
 }

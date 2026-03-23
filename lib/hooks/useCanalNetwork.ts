@@ -4,28 +4,33 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { useContext } from 'react'
 import { MapContext } from '@/app/(map)/MapContext'
 import { createClient } from '@/lib/supabase/client'
-import type { POIWithStatus, PoiType } from '@/lib/types/database'
 
-export function usePOIs(typeFilter: PoiType | null = null) {
+export interface CanalSegment {
+  id: number
+  name: string
+  sapnavstatus: string
+  geojson: string
+}
+
+export function useCanalNetwork() {
   const { bounds } = useContext(MapContext)
 
-  return useQuery<POIWithStatus[]>({
-    queryKey: ['pois', bounds, typeFilter],
+  return useQuery<CanalSegment[]>({
+    queryKey: ['canal-network', bounds],
     queryFn: async () => {
       if (!bounds) return []
       const supabase = createClient()
-      const { data, error } = await supabase.rpc('pois_in_bbox', {
+      const { data, error } = await supabase.rpc('canal_network_in_bbox', {
         p_lng1: bounds.lng1,
         p_lat1: bounds.lat1,
         p_lng2: bounds.lng2,
         p_lat2: bounds.lat2,
-        ...(typeFilter ? { p_type: typeFilter } : {}),
       })
       if (error) throw error
-      return (data as POIWithStatus[]) ?? []
+      return (data as CanalSegment[]) ?? []
     },
     enabled: !!bounds,
-    staleTime: 30_000,
+    staleTime: 300_000, // 5 min — canal network is static
     placeholderData: keepPreviousData,
   })
 }

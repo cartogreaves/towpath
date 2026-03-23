@@ -2,65 +2,53 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
-import type { PoiType, POIWithStatus, ServiceStatus, CommunityPost, BoatLocationWithProfile, SavedRouteWithGeojson } from '@/lib/types/database'
+import type { CommunityPost, BoatLocationWithProfile, SavedRouteWithGeojson } from '@/lib/types/database'
+import type { CanalSegment } from '@/lib/hooks/useCanalNetwork'
+import type { InfrastructurePoint } from '@/lib/hooks/useCanalInfrastructure'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
-
-const PIN_COLOURS: Record<PoiType, string> = {
-  water_point:    '#4A8B6E',
-  mooring:        '#4A5A3A',
-  lock:           '#8A7558',
-  winding_hole:   '#C8B89E',
-  waste_services: '#7A8E66',
-  pump_out:       '#7A8E66',
-  pub:            '#C4704A',
-  shop:           '#5E7048',
-  boatyard:       '#6B5A42',
-  fuel:           '#6B5A42',
-  launderette:    '#5E7048',
-  post_office:    '#5E7048',
-}
-
-const STATUS_DOT_COLOURS: Record<ServiceStatus, string> = {
-  working:        '#4A8B6E',
-  issue_reported: '#C4704A',
-  closed:         '#B5403A',
-  unknown:        'transparent',
-}
 
 export interface MapBounds {
   lng1: number; lat1: number; lng2: number; lat2: number
 }
 
+// Colour per infrastructure type for data-driven circle styling
+const INFRA_COLOURS: Record<string, string> = {
+  lock:          '#8A7558',
+  winding_hole:  '#C8B89E',
+  bridge:        '#6B5A42',
+  culvert:       '#7A8E66',
+  aqueduct:      '#4A8B6E',
+  tunnel_portal: '#4A5A3A',
+  weir:          '#5E7048',
+  reservoir:     '#4A8B6E',
+  wharf:         '#C4704A',
+}
+
+// Build a Mapbox match expression from the colour map
+function infraColourExpression(): mapboxgl.Expression {
+  const pairs: (string | mapboxgl.Expression)[] = ['match', ['get', 'type']]
+  for (const [type, colour] of Object.entries(INFRA_COLOURS)) {
+    pairs.push(type, colour)
+  }
+  pairs.push('#5E7048') // default
+  return pairs as mapboxgl.Expression
+}
+
 interface MapCanvasProps {
-  pois?: POIWithStatus[]
-  selectedPoi?: POIWithStatus | null
+  selectedPoi?: InfrastructurePoint | null
   communityPosts?: CommunityPost[]
   selectedCommunityPost?: CommunityPost | null
   savedRoutes?: SavedRouteWithGeojson[]
   boatLocations?: BoatLocationWithProfile[]
+  canalSegments?: CanalSegment[]
+  infrastructure?: InfrastructurePoint[]
   bottomPadding?: number
   isDark?: boolean
   onBoundsChange?: (bounds: MapBounds) => void
-  onPoiClick?: (poi: POIWithStatus) => void
   onCommunityPostClick?: (post: CommunityPost) => void
+  onInfrastructureClick?: (point: InfrastructurePoint) => void
   className?: string
-}
-
-function createPinSVG(fill: string, statusColour?: string): string {
-  const dot = statusColour && statusColour !== 'transparent'
-    ? `<circle cx="18" cy="22" r="3" fill="${statusColour}" stroke="white" stroke-width="1"/>`
-    : ''
-  return `
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="32" viewBox="0 0 24 32">
-      <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 20 12 20s12-11 12-20C24 5.373 18.627 0 12 0z"
-        fill="${fill}" stroke="#2C3A2A" stroke-width="1"/>
-      ${dot}
-    </svg>`
-}
-
-function svgToDataUrl(svg: string): string {
-  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.trim())
 }
 
 function createBoatSVG(colour: string): string {
@@ -71,17 +59,18 @@ function createBoatSVG(colour: string): string {
 }
 
 export function MapCanvas({
-  pois = [],
   selectedPoi = null,
   communityPosts = [],
   selectedCommunityPost = null,
   savedRoutes = [],
   boatLocations = [],
+  canalSegments = [],
+  infrastructure = [],
   bottomPadding = 0,
   isDark = false,
   onBoundsChange,
-  onPoiClick,
   onCommunityPostClick,
+  onInfrastructureClick,
   className = '',
 }: MapCanvasProps) {
   const containerRef    = useRef<HTMLDivElement>(null)
@@ -124,54 +113,6 @@ export function MapCanvas({
         })
       } catch { /* layer names vary by style version */ }
 
-      map.addSource('pois', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-        cluster: true, clusterMaxZoom: 12, clusterRadius: 50,
-      })
-
-      map.addLayer({
-        id: 'poi-clusters', type: 'circle', source: 'pois',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': '#E8EBE2', 'circle-radius': 18,
-          'circle-stroke-width': 2, 'circle-stroke-color': '#5E7048',
-        },
-      })
-
-      map.addLayer({
-        id: 'poi-cluster-count', type: 'symbol', source: 'pois',
-        filter: ['has', 'point_count'],
-        layout: { 'text-field': '{point_count_abbreviated}', 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'], 'text-size': 13 },
-        paint: { 'text-color': '#2C3A2A' },
-      })
-
-      map.addLayer({
-        id: 'poi-unclustered', type: 'symbol', source: 'pois',
-        filter: ['!', ['has', 'point_count']],
-        layout: { 'icon-image': ['get', 'icon'], 'icon-size': 1, 'icon-allow-overlap': true, 'icon-anchor': 'bottom' },
-      })
-
-      map.on('click', 'poi-unclustered', (e) => {
-        if (!e.features?.[0] || !onPoiClick) return
-        const props = e.features[0].properties
-        if (props) {
-          onPoiClick({
-            id: props.id, name: props.name, type: props.type,
-            lng: (e.features[0].geometry as GeoJSON.Point).coordinates[0],
-            lat: (e.features[0].geometry as GeoJSON.Point).coordinates[1],
-            canal_id: props.canal_id, mile_marker: props.mile_marker,
-            metadata: props.metadata ? JSON.parse(props.metadata) : {},
-            current_status: props.current_status,
-            report_count: props.report_count,
-            latest_report: props.latest_report,
-          })
-        }
-      })
-
-      map.on('mouseenter', 'poi-unclustered', () => { map.getCanvas().style.cursor = 'pointer' })
-      map.on('mouseleave', 'poi-unclustered', () => { map.getCanvas().style.cursor = '' })
-
       map.addSource('friends', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
       map.addSource('routes',  { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
       map.addLayer({
@@ -211,6 +152,89 @@ export function MapCanvas({
         map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = '' })
       }
 
+      // ── Canal network (permanent base layer) ──────────────────────────────
+      map.addSource('canal-network', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      })
+      map.addLayer({
+        id: 'canal-network-line',
+        type: 'line',
+        source: 'canal-network',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': [
+            'match', ['get', 'sapnavstatus'],
+            'Fully Navigable',    '#4A8B6E',
+            'Partially Navigable','#7AB89E',
+            '#B0C4B8', // default (non-navigable / unknown)
+          ],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1, 14, 3],
+          'line-opacity': 0.7,
+        },
+      })
+
+      // ── CRT Infrastructure (POI replacement) ─────────────────────────────
+      map.addSource('infrastructure', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+        cluster: true, clusterMaxZoom: 13, clusterRadius: 40,
+      })
+      map.addLayer({
+        id: 'infra-clusters',
+        type: 'circle',
+        source: 'infrastructure',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': '#E8EBE2',
+          'circle-radius': 16,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#5E7048',
+        },
+      })
+      map.addLayer({
+        id: 'infra-cluster-count',
+        type: 'symbol',
+        source: 'infrastructure',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': '{point_count_abbreviated}',
+          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 12,
+        },
+        paint: { 'text-color': '#2C3A2A' },
+      })
+      map.addLayer({
+        id: 'infra-points',
+        type: 'circle',
+        source: 'infrastructure',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 4, 15, 8],
+          'circle-color': infraColourExpression(),
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': '#ffffff',
+          'circle-opacity': 0.9,
+        },
+      })
+
+      map.on('click', 'infra-points', (e) => {
+        if (!e.features?.[0] || !onInfrastructureClick) return
+        const props = e.features[0].properties
+        if (props) {
+          onInfrastructureClick({
+            id: props.id,
+            sap_description: props.sap_description,
+            type: props.type,
+            waterway_name: props.waterway_name,
+            lng: (e.features[0].geometry as GeoJSON.Point).coordinates[0],
+            lat: (e.features[0].geometry as GeoJSON.Point).coordinates[1],
+          })
+        }
+      })
+      map.on('mouseenter', 'infra-points', () => { map.getCanvas().style.cursor = 'pointer' })
+      map.on('mouseleave', 'infra-points', () => { map.getCanvas().style.cursor = '' })
+
       emitBounds(map)
     })
 
@@ -229,46 +253,42 @@ export function MapCanvas({
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update POI markers
+  // Update canal network lines
   useEffect(() => {
     const map = mapRef.current
     if (!map || !map.isStyleLoaded()) return
-    const source = map.getSource('pois') as mapboxgl.GeoJSONSource
+    const source = map.getSource('canal-network') as mapboxgl.GeoJSONSource
     if (!source) return
-
-    const imagePromises = pois.map(async (poi) => {
-      const iconKey = `pin-${poi.type}-${poi.current_status || 'unknown'}`
-      if (!map.hasImage(iconKey)) {
-        const fill = PIN_COLOURS[poi.type] || '#5E7048'
-        const dotColour = poi.current_status ? STATUS_DOT_COLOURS[poi.current_status] : undefined
-        const img = new Image(24, 32)
-        img.src = svgToDataUrl(createPinSVG(fill, dotColour))
-        await new Promise<void>((resolve) => {
-          img.onload = () => { if (!map.hasImage(iconKey)) map.addImage(iconKey, img); resolve() }
-        })
-      }
-      return iconKey
+    source.setData({
+      type: 'FeatureCollection',
+      features: canalSegments.map((seg) => ({
+        type: 'Feature' as const,
+        geometry: JSON.parse(seg.geojson),
+        properties: { id: seg.id, name: seg.name, sapnavstatus: seg.sapnavstatus },
+      })),
     })
+  }, [canalSegments])
 
-    Promise.all(imagePromises).then(() => {
-      source.setData({
-        type: 'FeatureCollection',
-        features: pois.map((poi) => ({
-          type: 'Feature',
-          geometry: { type: 'Point', coordinates: [poi.lng, poi.lat] },
-          properties: {
-            id: poi.id, name: poi.name, type: poi.type,
-            canal_id: poi.canal_id, mile_marker: poi.mile_marker,
-            metadata: JSON.stringify(poi.metadata),
-            current_status: poi.current_status,
-            report_count: poi.report_count,
-            latest_report: poi.latest_report,
-            icon: `pin-${poi.type}-${poi.current_status || 'unknown'}`,
-          },
-        })),
-      })
+  // Update infrastructure points
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !map.isStyleLoaded()) return
+    const source = map.getSource('infrastructure') as mapboxgl.GeoJSONSource
+    if (!source) return
+    source.setData({
+      type: 'FeatureCollection',
+      features: infrastructure.map((pt) => ({
+        type: 'Feature' as const,
+        geometry: { type: 'Point', coordinates: [pt.lng, pt.lat] },
+        properties: {
+          id: pt.id,
+          sap_description: pt.sap_description,
+          type: pt.type,
+          waterway_name: pt.waterway_name,
+        },
+      })),
     })
-  }, [pois])
+  }, [infrastructure])
 
   // Update community post pins
   useEffect(() => {

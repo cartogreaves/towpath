@@ -1,36 +1,35 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Input } from '@/components/ui/Input'
 import { BottomNav } from '@/components/ui/BottomNav'
-import { StatusDot } from '@/components/ui/StatusBadge'
 import { useProfile } from '@/lib/hooks/useProfile'
 import {
-  Droplets, Anchor, BetweenVerticalStart, Beer,
-  Store, Wrench, RotateCcw, Search, Waves
+  BetweenVerticalStart, RotateCcw, Waves, ArrowLeftRight, Milestone, AlertTriangle,
+  Navigation, Search
 } from 'lucide-react'
-import type { POIWithStatus, PoiType } from '@/lib/types/database'
+import type { InfrastructurePoint } from '@/lib/hooks/useCanalInfrastructure'
 
-const POI_ICONS: Partial<Record<PoiType, React.ReactNode>> = {
-  water_point: <Droplets size={16} strokeWidth={1.5} className="text-water-500" />,
-  mooring: <Anchor size={16} strokeWidth={1.5} className="text-green-600" />,
-  lock: <BetweenVerticalStart size={16} strokeWidth={1.5} className="text-earth-500" />,
-  winding_hole: <RotateCcw size={16} strokeWidth={1.5} className="text-earth-300" />,
-  pub: <Beer size={16} strokeWidth={1.5} className="text-rust-500" />,
-  waste_services: <Waves size={16} strokeWidth={1.5} className="text-green-400" />,
-  shop: <Store size={16} strokeWidth={1.5} className="text-green-500" />,
-  boatyard: <Wrench size={16} strokeWidth={1.5} className="text-earth-700" />,
-  fuel: <Wrench size={16} strokeWidth={1.5} className="text-earth-700" />,
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  lock:          <BetweenVerticalStart size={16} strokeWidth={1.5} />,
+  winding_hole:  <RotateCcw size={16} strokeWidth={1.5} />,
+  bridge:        <ArrowLeftRight size={16} strokeWidth={1.5} />,
+  aqueduct:      <Waves size={16} strokeWidth={1.5} />,
+  tunnel_portal: <Milestone size={16} strokeWidth={1.5} />,
+  weir:          <AlertTriangle size={16} strokeWidth={1.5} />,
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  lock: 'Lock', winding_hole: 'Winding hole', bridge: 'Bridge',
+  aqueduct: 'Aqueduct', tunnel_portal: 'Tunnel portal', weir: 'Weir',
+  culvert: 'Culvert', reservoir: 'Reservoir', wharf: 'Wharf',
 }
 
 export default function SearchPage() {
-  const { isLoggedIn } = useProfile()
+  useProfile() // keep auth state warm
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<POIWithStatus[]>([])
+  const [results, setResults] = useState<InfrastructurePoint[]>([])
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   async function handleSearch(q: string) {
     setQuery(q)
@@ -39,22 +38,21 @@ export default function SearchPage() {
 
     const supabase = createClient()
     const { data } = await supabase
-      .from('pois')
-      .select('id, name, type, canal_id, mile_marker, metadata')
-      .ilike('name', `%${q}%`)
+      .from('canal_infrastructure')
+      .select('id, sap_description, type, waterway_name')
+      .ilike('sap_description', `%${q}%`)
       .limit(20)
 
-    // Flatten to POIWithStatus shape (no geo coords from REST)
-    const mapped = (data ?? []).map((p: { id: string; name: string; type: PoiType; canal_id: string | null; mile_marker: number | null; metadata: Record<string, unknown> }) => ({
-      ...p,
-      lng: 0,
-      lat: 0,
-      current_status: null,
-      report_count: 0,
-      latest_report: null,
-    })) as POIWithStatus[]
-
-    setResults(mapped)
+    setResults(
+      (data ?? []).map((r) => ({
+        id: r.id,
+        sap_description: r.sap_description ?? '',
+        type: r.type ?? '',
+        waterway_name: r.waterway_name ?? '',
+        lng: 0,
+        lat: 0,
+      }))
+    )
     setLoading(false)
   }
 
@@ -96,34 +94,32 @@ export default function SearchPage() {
           <div className="py-8 text-center">
             <Search size={32} className="text-green-300 mx-auto mb-3" />
             <p className="text-body text-green-400">
-              Search canals, services, pubs, locks...
+              Search locks, bridges, aqueducts, tunnels...
             </p>
           </div>
         )}
 
         {results.length > 0 && (
           <div className="bg-bg-surface border border-green-100 rounded-lg overflow-hidden">
-            {results.map((poi, i) => (
-              <button
-                key={poi.id}
-                onClick={() => router.push(`/?poi=${poi.id}`)}
+            {results.map((pt, i) => (
+              <div
+                key={pt.id}
                 className={`
-                  w-full flex items-center gap-3 px-4 py-3 text-left
-                  hover:bg-bg-elevated transition-colors
+                  flex items-center gap-3 px-4 py-3
                   ${i < results.length - 1 ? 'border-b border-green-50' : ''}
                 `}
               >
-                <span className="flex-shrink-0">
-                  {POI_ICONS[poi.type] ?? <Store size={16} className="text-green-400" />}
+                <span className="flex-shrink-0 text-green-400">
+                  {TYPE_ICONS[pt.type] ?? <Navigation size={16} />}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-body font-medium text-green-700 truncate">{poi.name}</p>
-                  <p className="text-sm text-green-400 capitalize">
-                    {poi.type.replace(/_/g, ' ')}
+                  <p className="text-body font-medium text-green-700 truncate">{pt.sap_description}</p>
+                  <p className="text-sm text-green-400">
+                    {TYPE_LABELS[pt.type] ?? pt.type.replace(/_/g, ' ')}
+                    {pt.waterway_name ? ` · ${pt.waterway_name}` : ''}
                   </p>
                 </div>
-                <StatusDot status={poi.current_status} />
-              </button>
+              </div>
             ))}
           </div>
         )}

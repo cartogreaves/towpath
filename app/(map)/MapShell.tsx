@@ -8,13 +8,15 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { BottomNav } from '@/components/ui/BottomNav'
 import { SearchBar } from '@/components/ui/SearchBar'
 import { FilterChips } from '@/components/ui/FilterChips'
-import { usePOIs } from '@/lib/hooks/usePOIs'
 import { useCommunityPosts } from '@/lib/hooks/useCommunityPosts'
 import { useSavedRoutes } from '@/lib/hooks/useSavedRoutes'
 import { useFriendLocations } from '@/lib/hooks/useFriendLocations'
 import { useProfile } from '@/lib/hooks/useProfile'
+import { useCanalNetwork } from '@/lib/hooks/useCanalNetwork'
+import { useCanalInfrastructure } from '@/lib/hooks/useCanalInfrastructure'
 import type { MapBounds } from '@/components/map/MapCanvas'
-import type { POIWithStatus, PoiType, CommunityPost } from '@/lib/types/database'
+import type { CommunityPost } from '@/lib/types/database'
+import type { InfrastructurePoint } from '@/lib/hooks/useCanalInfrastructure'
 import type { SnapPoint } from '@/components/ui/BottomSheet'
 
 const DynamicMap = dynamic(
@@ -40,26 +42,28 @@ function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }
   const isCommunityTab = pathname.startsWith('/community')
   const isProfileTab   = pathname.startsWith('/profile')
 
-  const poiTypeFilter: PoiType | null =
-    activeFilter && activeFilter !== 'events' && activeFilter !== 'stoppages'
-      ? (activeFilter as PoiType)
-      : null
+  const infraTypeFilter: string | null = activeFilter ?? null
 
-  // Only fetch what the active tab needs
-  const { data: allPois = [] }          = usePOIs(poiTypeFilter)
-  const { data: allCommunity = [] }     = useCommunityPosts()
-  const { data: savedRoutes = [] }      = useSavedRoutes({ enabled: isRoutesTab && !!profile?.id })
-  const { data: boatLocations = [] }    = useFriendLocations({ enabled: isProfileTab })
+  // Canal network is always visible (permanent base data)
+  const { data: canalSegments = [] } = useCanalNetwork()
 
-  // Each tab shows its own layer; others get empty arrays
-  const pois          = isMapTab       ? allPois                                              : []
-  const communityPins = isCommunityTab ? allCommunity.filter((p) => p.lat != null)           : []
-  const routes        = isRoutesTab    ? savedRoutes                                          : []
-  const boats         = isProfileTab   ? boatLocations                                        : []
+  // Infrastructure replaces POIs on the map tab
+  const { data: allInfra = [] } = useCanalInfrastructure(isMapTab ? infraTypeFilter : null)
+
+  const { data: allCommunity = [] }  = useCommunityPosts()
+  const { data: savedRoutes = [] }   = useSavedRoutes({ enabled: isRoutesTab && !!profile?.id })
+  const { data: boatLocations = [] } = useFriendLocations({ enabled: isProfileTab })
+
+  // Each tab shows its own overlay; others get empty arrays
+  const infrastructure = isMapTab       ? allInfra                                           : []
+  const communityPins  = isCommunityTab ? allCommunity.filter((p) => p.lat != null)          : []
+  const routes         = isRoutesTab    ? savedRoutes                                         : []
+  const boats          = isProfileTab   ? boatLocations                                       : []
 
   return (
     <DynamicMap
-      pois={pois}
+      canalSegments={canalSegments}
+      infrastructure={infrastructure}
       selectedPoi={selectedPoi}
       communityPosts={communityPins}
       selectedCommunityPost={selectedCommunityPost}
@@ -67,8 +71,8 @@ function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }
       boatLocations={boats}
       bottomPadding={snapToBottomPadding(snap)}
       onBoundsChange={onBoundsChange}
-      onPoiClick={(poi: POIWithStatus) => {
-        setSelectedPoi(poi)
+      onInfrastructureClick={(pt: InfrastructurePoint) => {
+        setSelectedPoi(pt)
         setSnap('half')
       }}
       onCommunityPostClick={(post: CommunityPost) => {
@@ -82,7 +86,7 @@ function MapLayer({ onBoundsChange }: { onBoundsChange: (b: MapBounds) => void }
 export function MapShell({ children }: { children: React.ReactNode }) {
   const [bounds, setBounds] = useState<MapBounds | null>(null)
   const [activeFilter, setActiveFilter] = useState<FilterValue>(null)
-  const [selectedPoi, setSelectedPoi] = useState<POIWithStatus | null>(null)
+  const [selectedPoi, setSelectedPoi] = useState<InfrastructurePoint | null>(null)
   const [selectedCommunityPost, setSelectedCommunityPost] = useState<CommunityPost | null>(null)
   const [snap, setSnap] = useState<SnapPoint>('quarter')
   const [searchQuery, setSearchQuery] = useState('')
