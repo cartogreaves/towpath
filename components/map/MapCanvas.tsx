@@ -157,6 +157,19 @@ export function MapCanvas({
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] },
       })
+      // Casing — dark brand-green outline that separates lines from any background
+      map.addLayer({
+        id: 'canal-network-casing',
+        type: 'line',
+        source: 'canal-network',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#2C3A2A', // green-800
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 3.5, 14, 9],
+          'line-opacity': 0.35,
+        },
+      })
+      // Main line — water-500 teal scaled by nav status
       map.addLayer({
         id: 'canal-network-line',
         type: 'line',
@@ -165,12 +178,12 @@ export function MapCanvas({
         paint: {
           'line-color': [
             'match', ['get', 'sapnavstatus'],
-            'Fully Navigable',    '#4A8B6E',
-            'Partially Navigable','#7AB89E',
-            '#B0C4B8', // default (non-navigable / unknown)
+            'Fully Navigable',    '#4A8B6E', // water-500
+            'Partially Navigable','#7AB89E', // lighter teal
+            '#A8BEB4',                       // non-navigable — muted
           ],
-          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1, 14, 3],
-          'line-opacity': 0.7,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 14, 6],
+          'line-opacity': 1,
         },
       })
 
