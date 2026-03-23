@@ -75,11 +75,11 @@ Everything a cruiser needs for day-to-day navigation. No sign-up, no login, no f
 - Nearby amenities: pubs, shops, launderettes, post offices
 - Read community status reports (but cannot submit or comment)
 
-**Events (read-only):**
-- Browse community events pinned to map locations
-- Canal festivals, boater meets, floating markets
-- See attendee count and details
-- Cannot RSVP or create (prompts account creation)
+**Community (read-only):**
+- Browse asks and offers posted by the canal community
+- Posts can be pinned to a map location
+- Public posts visible without an account
+- Cannot post, respond, or mark resolved (prompts account creation)
 
 ### Account tier (free — with future paid potential)
 
@@ -113,7 +113,14 @@ Unlocked by creating a free account. The gate appears contextually when a user t
 - Message friends via WhatsApp deep link
 - Location sharing can be paused/hidden at any time
 
-**Events + groups:**
+**Community posts:**
+- Post an Ask ("Does anyone have a water pump I could borrow?") or Offer ("We have surplus coal — Braunston, free")
+- Optional: pin the post to your current GPS location so it appears on the map
+- Visibility: public (everyone) or friends only
+- Mark your own post as resolved to remove it from the feed
+- Boaters can reach each other via WhatsApp deep link on their profiles
+
+**Events + groups (future):**
 - Create events pinned to map locations
 - RSVP to events, see who's going
 - Create or join groups (geographic: "Oxford Canal cruisers", interest: "solo boaters")
@@ -297,24 +304,32 @@ Default border: `1px solid green-100` (#C5CCBA) on cards and inputs against oatm
 
 ## 7. Components
 
-### Navigation — tiered
+### Navigation
 
-Navigation changes based on whether the user is logged in.
+Navigation is unified — the same 4-item nav regardless of login state. The map persists across all tab switches (Next.js route group pattern prevents remounts).
 
-**Bottom nav — open tier (no account):**
-- 4 items: Map, Services, Routes, Search
-- All items fully functional without login
+**Bottom nav — all users:**
+- 4 items: **Map** · **Routes** · **Community** · **Profile**
+- Profile tab shows an inline sign-in prompt when logged out (no redirect)
+- Search is in the bottom sheet header, always visible
 
-**Bottom nav — logged in:**
-- 5 items: Map, Services, Routes, Events, Profile
-- Search moves to a floating bar on the map or within the bottom sheet
-
-**Styling (both):**
+**Styling:**
 - Height: 56px + safe area inset
 - Background: `bg-surface` with top border `green-100`
-- Active: `green-600` (#4A5A3A) icon + Karla 500 label
+- Active: `green-600` (#4A5A3A) icon + Karla 500 label below
 - Inactive: `green-300` (#8A9A74) icon, no label
 - Icons: 24px, line style, stroke 1.5px
+- Nav tapping snaps the bottom sheet to half
+
+**Map layer per tab:**
+Each tab shows a different layer on the persistent map canvas:
+
+| Tab | Map shows |
+|-----|-----------|
+| Map | POI pins + clusters |
+| Routes | Saved route LineStrings (auto-fit to bounds) |
+| Community | Pinned posts — amber circles (ask), teal circles (offer) |
+| Profile | Narrowboat markers — own boat + friends sharing location |
 
 **Top nav (desktop):**
 - Height: 56px
@@ -449,6 +464,24 @@ All cards: `bg-surface` (#FFFFFF), border `1px green-100` (#C5CCBA), `rounded-lg
 └─────────────────────────────────┘
 ```
 
+**Community post card (ask / offer):**
+```
+┌─────────────────────────────────┐
+│ [Ask]  @wandering_otter · NB Pearl    🌐  3m ago │
+│                                 │
+│ Does anyone have a water pump   │
+│ key near Braunston? Lost mine.  │
+│                                 │
+│ [📍 Show on map]   [✓ Resolved] │  ← own posts only
+└─────────────────────────────────┘
+```
+
+- Ask posts: amber background (`amber-50`), amber border, amber type badge
+- Offer posts: teal background (`teal-50`), teal border, teal type badge
+- Visibility icon: `Globe` (public) or `Users` (friends only) — small, muted
+- "Show on map" button only if post has a location pin
+- "Mark resolved" only on own posts — removes from feed
+
 **Event card:**
 ```
 ┌─────────────────────────────────┐
@@ -469,14 +502,22 @@ The primary mobile interaction for all content below the map.
 
 - Background: `bg-surface` (#FFFFFF) with `rounded-xl` on top corners only
 - Handle: 32x4px rounded pill in `green-200` (#A8B596), centred, 8px from top
-- Backdrop: `rgba(44,58,42,0.12)` at half or full height
-- Transition: spring physics, `cubic-bezier(0.32, 0.72, 0, 1)`, ~300ms
+- Backdrop: `rgba(44,58,42,0.12)` at full height only
+- Transition: spring physics, `cubic-bezier(0.32, 0.72, 0, 1)`, 300ms
+- Non-draggable — handle tap-only to toggle between quarter and half
+- Scrollable content area with `max-height` matched to visible portion
 
-**Peek state content varies by context:**
-- Default: search bar + quick filter chips (Water, Moorings, Locks, Services, Events)
-- POI selected: service card summary (name, status, distance)
-- Route active: next waypoint summary + progress
-- Friend selected: boat card summary
+**Snap points:**
+- `quarter` — 236px above nav (default). Shows: "Towpath" wordmark + search bar + filter chips + peek of first card
+- `half` — 50vh. Shows full content scroll area
+- `full` — nav top (56px from viewport top). Full screen content
+
+**Persistent header (always visible at quarter):**
+- "Towpath" in Averia Serif Libre, `green-800`
+- Search bar: "Search along the Towpath..."
+- Horizontally scrolling filter chips
+
+**Map offset:** Mapbox bottom padding equals the sheet height at current snap point, so map content centres in the visible area above the sheet.
 
 ### Buttons
 
@@ -1631,15 +1672,80 @@ Build [specify what to build].
 
 ## 16. File & asset checklist
 
-- [ ] Averia Serif Libre + Karla font files (or Google Fonts link)
-- [ ] Custom Mapbox style (outdoors-v12 base, oatmeal land, green labels)
-- [ ] Dark mode Mapbox style (dark-v11 base)
-- [ ] Narrowboat marker SVG (top-down, parameterised fill colour — the only custom icon)
-- [ ] Pin marker base SVG (rounded pin shape, parameterised fill, 24x32px)
-- [ ] Lucide React installed (`npm i lucide-react`) — all POI and UI icons covered
-- [ ] Stoppage/closure overlay style for canal line segments
-- [ ] "Towpath" wordmark in Averia Serif Libre (green-800 and white variants)
-- [ ] Favicon and PWA icons (192px, 512px)
-- [ ] Open Graph image for social sharing
-- [ ] Account gate prompt copy variants (per gated action)
-- [ ] WhatsApp button icon (official brand asset)
+- [x] Averia Serif Libre + Karla — Google Fonts (loaded in `app/layout.tsx`)
+- [x] Mapbox style — `outdoors-v12` with oatmeal land, water tint overrides
+- [ ] Dark mode Mapbox style — `dark-v11` base wired in (`isDark` prop exists, toggle UI not built)
+- [x] Narrowboat marker SVG — inline in `MapCanvas.tsx` (`createBoatSVG`)
+- [x] Pin marker base SVG — inline in `MapCanvas.tsx` (`createPinSVG`)
+- [x] Lucide React — all POI and UI icons covered
+- [ ] Stoppage/closure overlay style — table + types exist, map layer not built
+- [x] "Towpath" wordmark — Averia Serif Libre in `MapShell` bottom sheet header
+- [ ] Favicon and PWA icons
+- [ ] Open Graph image
+- [x] Account gate prompt copy — 6 variants in `AccountGate.tsx`
+- [ ] WhatsApp button icon
+
+---
+
+## 17. Build status (as of March 2026)
+
+### Done ✓
+
+| Feature | Notes |
+|---------|-------|
+| Database schema | 8 migrations, PostGIS, RLS, all enums |
+| Auth | Magic link sign-in/sign-up, callback, sign-out |
+| Persistent map shell | Route group pattern, no remount on tab switch |
+| Mapbox map | POI pins, clusters, status dots, community circles, route lines, boat markers |
+| Tab-aware map layers | Each tab shows its own data layer |
+| Bottom sheet | Quarter/half/full snap, non-draggable, scrollable, map padding offset |
+| Unified 4-item nav | Map / Routes / Community / Profile |
+| Map ↔ drawer linking | Fly-to + pulse ring on POI or community post select |
+| POI list | Framer Motion transitions, keepPreviousData (no flash on pan) |
+| Filter chips | Water / Moorings / Locks / Fuel / Pubs |
+| Service cards | Icon, status badge, report count, account gate |
+| Community tab | Asks/offers timeline, create post, visibility toggle, GPS pin toggle, resolve |
+| Community map pins | Amber = ask, teal = offer; click selects post |
+| Routes tab | Saved routes list with stats |
+| Routes on map | LineString layer, auto-fit bounds |
+| Profile tab | Inline auth gate, stats, mooring timer widget, cruising log |
+| Boat markers | Own + friends' shared, SVG narrowboat, heading rotation, label |
+| Friends system | Add by handle, pending/accepted list, share_location |
+| Server actions | reportStatus, updateLocation, rsvpEvent, addLogEntry |
+| Seed data | 7 users, 28 POIs, events, friendships, boat locations, log entries |
+| TanStack Query | keepPreviousData, staleTime, refetchInterval throughout |
+
+### Still to build
+
+#### Must-have for launch
+
+| Feature | Where to start |
+|---------|---------------|
+| Report status form | `ReportStatusForm` component → wire to "Report" button in `ServiceCard` (`// TODO` at line 66) |
+| GPS location pinning for posts | Complete `pinLocation` flow in `CreatePostForm` — call `navigator.geolocation`, pass coords to insert |
+| RSVP on EventCard | Wire `rsvpEvent` server action to RSVP button (`// TODO` at line 38 of `EventCard.tsx`) |
+| Route creation page | `/routes/new` — pick start/end on map, name, set pace, call `saveRoute` action |
+
+#### High value, post-launch
+
+| Feature | Notes |
+|---------|-------|
+| Mooring timer controls | Start/stop/extend on profile page — `addLogEntry.ts` has `startMooringTimer` action |
+| Photo uploads on reports | `reportStatus.ts` has TODO — Supabase Storage `report-photos` bucket already created |
+| Friends — unfriend action | `/friends` page has no remove button |
+| "View on map" for routes | Routes page button is placeholder — should switch tab and fit route bounds |
+| Stoppage layer | `stoppages` table + types done — needs Mapbox layer + CRT ingest edge function |
+| Settings sub-pages | `/settings/location`, `/settings/notifications`, `/settings/appearance`, `/settings/privacy` |
+| Event creation | Decide: part of Community tab, or separate `/events/create` page |
+| QR code friend-add | Profile page references this — needs QR component |
+| Desktop layout | Left-panel + top-nav for tablet/desktop (section 6) |
+| Groups | Table exists in DB, no UI |
+
+#### Future / paid tier
+
+- Advanced route planner (multi-day itinerary with suggested overnight stops)
+- Historical cruising analytics
+- Premium map layers (depth data, mooring reviews)
+- Boat maintenance log
+- CRT stoppage RSS ingestion (edge function designed, not deployed)
+- Mooring timer push reminders (edge function designed, not deployed)
