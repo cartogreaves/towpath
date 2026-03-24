@@ -149,7 +149,7 @@ export function MapShell({ children }: { children: React.ReactNode }) {
         setNavigationBounds,
       }}
     >
-      <main className="relative w-full h-screen overflow-hidden bg-bg-primary">
+      <main className="relative w-full overflow-hidden bg-bg-primary" style={{ height: '100dvh' }}>
         <MapLayer onBoundsChange={handleBoundsChange} />
 
         {/* Navigation selector — top-left map overlay */}
